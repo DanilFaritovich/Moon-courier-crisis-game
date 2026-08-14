@@ -1,9 +1,6 @@
 import networkx as nx
 
-from app.models.point import Point
-from app.models.road import Road
-
-from backend.app.repositories.graph_repository import GraphRepository
+from app.repositories.graph_connector_repository import GraphRepository
 
 
 class GraphService:
