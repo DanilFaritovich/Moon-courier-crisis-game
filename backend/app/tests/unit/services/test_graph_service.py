@@ -2,9 +2,7 @@ from unittest.mock import Mock
 
 import networkx as nx
 
-from app.models.point import Point
 from app.services.graph_service import GraphService
-from backend.app.repositories.graph_repository import GraphRepository
 
 
 class TestGraphService:
