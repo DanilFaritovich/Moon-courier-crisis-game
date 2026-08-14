@@ -5,7 +5,8 @@ import pytest
 from app.models.point import Point, PointType
 from app.models.road import Road
 
-from backend.app.repositories.graph_repository import GraphRepository
+from backend.app.repositories.graph_connector_repository import GraphRepository
+from backend.app.repositories.order_connector_repository import OrderRepository
 
 
 @pytest.fixture
@@ -73,3 +74,8 @@ def isolated_point() -> Point:
 def graph_repository():
     """Return a mocked graph repository with test data."""
     return Mock(spec=GraphRepository)
+
+@pytest.fixture
+def order_repository():
+    """Return a mocked graph repository with test data."""
+    return Mock(spec=OrderRepository)
