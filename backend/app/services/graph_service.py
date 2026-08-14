@@ -3,16 +3,20 @@ import networkx as nx
 from app.models.point import Point
 from app.models.road import Road
 
+from backend.app.repositories.graph_repository import GraphRepository
+
 
 class GraphService:
     """Build and manipulate the game map graph."""
 
-    @staticmethod
-    def build_graph(
-        points: list[Point],
-        roads: list[Road],
-    ) -> nx.Graph:
+    def __init__(self, repository: GraphRepository):
+        self.repository = repository
+
+    def build_graph(self) -> nx.Graph:
         """Build a NetworkX graph from map points and roads."""
+
+        points = self.repository.get_points()
+        roads = self.repository.get_roads()
 
         graph = nx.Graph()
 
