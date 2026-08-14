@@ -1,9 +1,9 @@
 from app.models.point import Point, PointType
 from app.models.road import Road
-from app.services.map_service import MapService
+from app.services.connector.graph_connector_service import GraphConnector
 
 
-class TestMapService:
+class TestGraphService:
     def test_get_map(self, db_session):
         """Return points and roads stored in the database."""
 
@@ -39,9 +39,9 @@ class TestMapService:
         ])
         db_session.commit()
 
-        service = MapService(db_session)
+        service = GraphConnector(db_session)
 
-        points, roads = service.get_map()
+        points, roads = service.get_points(), service.get_roads()
 
         assert len(points) == 2
         assert len(roads) == 1

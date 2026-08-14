@@ -64,3 +64,9 @@ pnpm-debug.log*
 # =========================
 .DS_Store
 Thumbs.db
+
+# =========================
+# OS files
+# =========================
+collect_project.py
+project_context.txt
