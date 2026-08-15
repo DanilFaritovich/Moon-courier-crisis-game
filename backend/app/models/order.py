@@ -1,11 +1,10 @@
 from enum import Enum
 
+from app.db.base import Base
+from app.models.point import Point
 from sqlalchemy import Enum as SqlEnum
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
-from app.db.base import Base
-from app.models.point import Point
 
 
 class OrderStatus(str, Enum):

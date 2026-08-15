@@ -1,7 +1,5 @@
-from unittest.mock import Mock
 
 import networkx as nx
-
 from app.services.graph_service import GraphService
 
 

@@ -1,7 +1,6 @@
 from unittest.mock import Mock
 
 import pytest
-
 from app.models.point import Point, PointType
 from app.models.road import Road
 
