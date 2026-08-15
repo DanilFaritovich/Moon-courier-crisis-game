@@ -41,6 +41,3 @@ class OrderService:
 
     def complete_order(self, order: Order) -> None:
         self.repository.complete_order(order)
-
-    def fail_order(self, order: Order) -> None:
-        self.repository.fail_order(order)

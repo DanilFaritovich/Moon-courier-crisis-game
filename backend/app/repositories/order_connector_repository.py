@@ -25,8 +25,3 @@ class OrderRepository(ABC):
     def complete_order(self, order: Order) -> None:
         """Mark an order as completed."""
         ...
-
-    @abstractmethod
-    def fail_order(self, order: Order) -> None:
-        """Mark an order as failed."""
-        ...
