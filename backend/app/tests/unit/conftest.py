@@ -4,6 +4,7 @@ import pytest
 from app.models.point import Point, PointType
 from app.models.road import Road
 from app.repositories.delivery_connector_repository import DeliveryRepository
+from app.repositories.event_connector_repository import EventRepository
 from app.repositories.graph_connector_repository import GraphRepository
 from app.repositories.order_connector_repository import OrderRepository
 from app.repositories.rover_connector_repository import RoverConnectorRepository
@@ -98,3 +99,11 @@ def delivery_repository():
     """Return a mocked delivery repository."""
 
     return Mock(spec=DeliveryRepository)
+
+# ========================
+# Event
+# ========================
+
+@pytest.fixture
+def event_repository():
+    return Mock(spec=EventRepository)

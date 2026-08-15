@@ -1,5 +1,8 @@
+from datetime import datetime, timedelta, timezone
+
 import pytest
 from app.models.delivery import Delivery, DeliveryStatus
+from app.models.event import Event, EventType
 from app.models.order import Order, OrderStatus, OrderUrgency
 from app.models.point import Point, PointType
 from app.models.rover import Rover, RoverStatus
@@ -105,5 +108,39 @@ def deliveries():
             order_id=11,
             rover_id=6,
             status=DeliveryStatus.IN_PROGRESS,
+        ),
+    ]
+
+# ========================
+# Event
+# ========================
+
+@pytest.fixture
+def event():
+    return Event(
+        id=1,
+        event_type=EventType.DUST_STORM,
+        title="Dust Storm",
+        description="A dust storm reduces rover speed.",
+        expires_at=datetime.now(timezone.utc) + timedelta(hours=3),
+    )
+
+
+@pytest.fixture
+def events():
+    return [
+        Event(
+            id=1,
+            event_type=EventType.DUST_STORM,
+            title="Dust Storm",
+            description="A dust storm reduces rover speed.",
+            expires_at=datetime.now(timezone.utc) + timedelta(hours=3),
+        ),
+        Event(
+            id=2,
+            event_type=EventType.SOLAR_STORM,
+            title="Solar Storm",
+            description="Solar activity increases battery consumption.",
+            expires_at=datetime.now(timezone.utc) + timedelta(hours=2),
         ),
     ]

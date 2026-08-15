@@ -1,6 +1,9 @@
+from datetime import datetime, timedelta, timezone
+
 import pytest
 from app.db.base import Base
 from app.models.delivery import Delivery
+from app.models.event import Event, EventType
 from app.models.order import Order, OrderStatus
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
@@ -74,3 +77,49 @@ def db_deliveries(db_session, rover):
     db_session.commit()
 
     return deliveries
+
+# ========================
+# Event
+# ========================
+
+@pytest.fixture
+def event(db_session):
+    event = Event(
+        event_type=EventType.DUST_STORM,
+        title="Dust Storm",
+        description="A dust storm reduces rover speed.",
+        expires_at=datetime.now(timezone.utc) + timedelta(hours=3),
+    )
+
+    db_session.add(event)
+    db_session.commit()
+    db_session.refresh(event)
+
+    return event
+
+
+@pytest.fixture
+def events(db_session):
+    now = datetime.now(timezone.utc)
+
+    active_event = Event(
+        event_type=EventType.DUST_STORM,
+        title="Dust Storm",
+        description="A dust storm reduces rover speed.",
+        expires_at=now + timedelta(hours=3),
+    )
+
+    expired_event = Event(
+        event_type=EventType.SOLAR_STORM,
+        title="Solar Storm",
+        description="Solar activity increases battery consumption.",
+        expires_at=now - timedelta(hours=3),
+    )
+
+    db_session.add_all([active_event, expired_event])
+    db_session.commit()
+
+    db_session.refresh(active_event)
+    db_session.refresh(expired_event)
+
+    return [active_event, expired_event]
