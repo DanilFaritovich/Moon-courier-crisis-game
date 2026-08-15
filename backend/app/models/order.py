@@ -11,9 +11,8 @@ class OrderStatus(str, Enum):
     """Current state of a delivery order."""
 
     AVAILABLE = "available"
-    IN_PROGRESS = "in_progress"
+    ASSIGNED = "assigned"
     COMPLETED = "completed"
-    FAILED = "failed"
 
 
 class OrderUrgency(str, Enum):
@@ -57,5 +56,4 @@ class Order(Base):
         nullable=False,
     )
 
-    # Relationship to the destination point.
-    destination: Mapped[Point] = relationship()
+    destination: Mapped["Point"] = relationship()

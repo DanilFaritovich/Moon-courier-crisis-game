@@ -36,16 +36,8 @@ class TestOrderConnectorRepository:
         assert created_order.urgency == OrderUrgency.HIGH
         assert created_order.status == OrderStatus.AVAILABLE
 
-    def test_get_order(self, db_session):
+    def test_get_order(self, db_session, point):
         """Return an order by its identifier."""
-
-        point = Point(
-            id=1,
-            name="Delivery Point",
-            type=PointType.DELIVERY,
-            x=100,
-            y=100,
-        )
 
         order = Order(
             id=1,
@@ -76,16 +68,8 @@ class TestOrderConnectorRepository:
 
         assert result is None
 
-    def test_get_available_orders(self, db_session):
+    def test_get_available_orders(self, db_session, point):
         """Return only orders with AVAILABLE status."""
-
-        point = Point(
-            id=1,
-            name="Delivery Point",
-            type=PointType.DELIVERY,
-            x=100,
-            y=100,
-        )
 
         available_order = Order(
             id=1,
@@ -118,23 +102,8 @@ class TestOrderConnectorRepository:
         assert orders[0].id == 1
         assert orders[0].status == OrderStatus.AVAILABLE
 
-    def test_complete_order(self, db_session):
+    def test_complete_order(self, db_session, point, order):
         """Change an order status to COMPLETED."""
-
-        point = Point(
-            id=1,
-            name="Delivery Point",
-            type=PointType.DELIVERY,
-            x=100,
-            y=100,
-        )
-
-        order = Order(
-            id=1,
-            destination_point_id=1,
-            weight=10.0,
-            reward=50,
-        )
 
         db_session.add_all([point, order])
         db_session.commit()
@@ -146,32 +115,3 @@ class TestOrderConnectorRepository:
         db_session.refresh(order)
 
         assert order.status == OrderStatus.COMPLETED
-
-    def test_fail_order(self, db_session):
-        """Change an order status to FAILED."""
-
-        point = Point(
-            id=1,
-            name="Delivery Point",
-            type=PointType.DELIVERY,
-            x=100,
-            y=100,
-        )
-
-        order = Order(
-            id=1,
-            destination_point_id=1,
-            weight=10.0,
-            reward=50,
-        )
-
-        db_session.add_all([point, order])
-        db_session.commit()
-
-        repository = OrderConnector(db_session)
-
-        repository.fail_order(order)
-
-        db_session.refresh(order)
-
-        assert order.status == OrderStatus.FAILED

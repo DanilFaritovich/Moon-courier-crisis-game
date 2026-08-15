@@ -121,7 +121,7 @@ class TestOrderService:
             destination_point_id=10,
             weight=25.0,
             reward=100,
-            status=OrderStatus.IN_PROGRESS,
+            status=OrderStatus.ASSIGNED,
         )
 
         service = OrderService(order_repository)
@@ -129,20 +129,3 @@ class TestOrderService:
         service.complete_order(order)
 
         order_repository.complete_order.assert_called_once_with(order)
-
-    def test_fail_order(self, order_repository):
-        """Fail an order through the repository."""
-
-        order = Order(
-            id=1,
-            destination_point_id=10,
-            weight=25.0,
-            reward=100,
-            status=OrderStatus.IN_PROGRESS,
-        )
-
-        service = OrderService(order_repository)
-
-        service.fail_order(order)
-
-        order_repository.fail_order.assert_called_once_with(order)
