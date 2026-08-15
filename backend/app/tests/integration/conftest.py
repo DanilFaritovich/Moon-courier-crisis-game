@@ -1,10 +1,8 @@
 import pytest
-
+from app.db.base import Base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
-
-from app.db.base import Base
 
 
 @pytest.fixture

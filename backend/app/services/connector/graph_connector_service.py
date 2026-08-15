@@ -1,9 +1,9 @@
-from sqlalchemy import select
-from sqlalchemy.orm import Session
-
 from app.models.point import Point
 from app.models.road import Road
 from app.repositories.graph_connector_repository import GraphRepository
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
 
 class GraphConnector(GraphRepository):
     """SQLAlchemy implementation of the graph_connector repository."""
