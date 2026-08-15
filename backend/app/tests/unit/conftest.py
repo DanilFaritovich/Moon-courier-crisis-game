@@ -3,7 +3,6 @@ from unittest.mock import Mock
 import pytest
 from app.models.point import Point, PointType
 from app.models.road import Road
-
 from app.models.rover import Rover, RoverStatus
 from app.repositories.graph_connector_repository import GraphRepository
 from app.repositories.order_connector_repository import OrderRepository

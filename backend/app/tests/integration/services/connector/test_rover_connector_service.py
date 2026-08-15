@@ -1,4 +1,3 @@
-from app.models.point import Point, PointType
 from app.models.rover import Rover, RoverStatus
 from app.services.connector.rover_connector_service import RoverConnectorService
 

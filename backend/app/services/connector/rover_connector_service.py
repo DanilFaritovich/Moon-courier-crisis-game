@@ -1,8 +1,7 @@
-from sqlalchemy import select
-from sqlalchemy.orm import Session
-
 from app.models.rover import Rover, RoverStatus
 from app.repositories.rover_connector_repository import RoverConnectorRepository
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 
 class RoverConnectorService(RoverConnectorRepository):

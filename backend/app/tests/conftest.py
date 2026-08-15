@@ -1,7 +1,7 @@
 import pytest
-
 from app.models.point import Point, PointType
 from app.models.rover import Rover, RoverStatus
+
 
 @pytest.fixture
 def point() -> Point:
