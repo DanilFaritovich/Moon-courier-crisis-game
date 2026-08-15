@@ -3,7 +3,7 @@ from unittest.mock import Mock
 import pytest
 from app.models.point import Point, PointType
 from app.models.road import Road
-from app.models.rover import Rover, RoverStatus
+from app.repositories.delivery_connector_repository import DeliveryRepository
 from app.repositories.graph_connector_repository import GraphRepository
 from app.repositories.order_connector_repository import OrderRepository
 from app.repositories.rover_connector_repository import RoverConnectorRepository
@@ -85,29 +85,16 @@ def order_repository():
 # ========================
 
 @pytest.fixture
-def rovers():
-    """Return a rover."""
-    rovers = [
-        Rover(
-            id=1,
-            name="Rover A",
-            cargo_capacity=40.0,
-            battery=100,
-            current_point_id=1,
-            status=RoverStatus.IDLE,
-        ),
-        Rover(
-            id=2,
-            name="Rover B",
-            cargo_capacity=40.0,
-            battery=100,
-            current_point_id=2,
-            status=RoverStatus.IDLE,
-        )
-    ]
-    return rovers
-
-@pytest.fixture
 def rover_repository():
     """Return a mocked rover repository."""
     return Mock(spec=RoverConnectorRepository)
+
+# ========================
+# Delivery
+# ========================
+
+@pytest.fixture
+def delivery_repository():
+    """Return a mocked delivery repository."""
+
+    return Mock(spec=DeliveryRepository)

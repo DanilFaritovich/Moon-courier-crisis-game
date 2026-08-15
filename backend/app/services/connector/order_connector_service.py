@@ -33,7 +33,3 @@ class OrderConnector(OrderRepository):
     def complete_order(self, order: Order) -> None:
         order.status = OrderStatus.COMPLETED
         self.db.commit()
-
-    def fail_order(self, order: Order) -> None:
-        order.status = OrderStatus.FAILED
-        self.db.commit()
