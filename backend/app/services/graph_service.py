@@ -1,5 +1,4 @@
 import networkx as nx
-
 from app.repositories.graph_connector_repository import GraphRepository
 
 

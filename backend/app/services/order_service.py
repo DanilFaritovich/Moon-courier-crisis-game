@@ -1,6 +1,7 @@
 from app.models.order import Order, OrderStatus, OrderUrgency
 from app.repositories.order_connector_repository import OrderRepository
 
+
 class OrderService:
     """Manage delivery orders."""
 

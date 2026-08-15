@@ -1,9 +1,9 @@
 from collections.abc import Generator
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy.pool import StaticPool
 
 from app.db.base import Base
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import StaticPool
 
 DATABASE_URL = "sqlite://"
 
@@ -21,7 +21,6 @@ SessionLocal = sessionmaker(
 
 def create_tables() -> None:
     """Create all database tables."""
-    from app import models
     
     Base.metadata.create_all(bind=engine)
 
