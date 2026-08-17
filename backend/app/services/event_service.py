@@ -1,4 +1,3 @@
-from datetime import datetime, timedelta, timezone
 from random import choice, randint
 
 from app.models.event import Event, EventType

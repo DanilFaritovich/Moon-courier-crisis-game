@@ -1,4 +1,3 @@
-from datetime import datetime, timedelta, timezone
 
 from app.models.event import Event, EventType
 from app.services.event_service import EventService

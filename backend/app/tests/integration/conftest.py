@@ -1,4 +1,3 @@
-from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -108,8 +107,6 @@ def event(db_session):
 
 @pytest.fixture
 def events(db_session):
-    now = datetime.now(timezone.utc)
-
     active_event = Event(
         event_type=EventType.DUST_STORM,
         title="Dust Storm",

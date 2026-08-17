@@ -16,6 +16,7 @@ class RoverConnectorRepository(ABC):
         """Return a rover by its identifier."""
         ...
 
+    @abstractmethod
     def get_rover_with_max_weight(self) -> Rover | None:
         """Return a rover with the highest weight capacity."""
         ...

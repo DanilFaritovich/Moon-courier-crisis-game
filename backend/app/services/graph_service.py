@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
 import networkx as nx
-from app.repositories.graph_connector_repository import GraphRepository
 from app.models.point import Point
+from app.repositories.graph_connector_repository import GraphRepository
 
 
 @dataclass

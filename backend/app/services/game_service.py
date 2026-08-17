@@ -3,15 +3,16 @@ from dataclasses import dataclass, field
 from random import randint
 from uuid import UUID, uuid4
 
-from app.services.graph_service import GraphService, GraphState
 from app.models.delivery import Delivery
+from app.models.event import Event
 from app.models.order import Order
 from app.models.rover import Rover
-from app.models.event import Event
-from app.services.rover_service import RoverService
-from app.services.order_service import OrderService
 from app.services.delivery_service import DeliveryService
 from app.services.event_service import EventService
+from app.services.graph_service import GraphService, GraphState
+from app.services.order_service import OrderService
+from app.services.rover_service import RoverService
+
 
 @dataclass
 class GameState:
@@ -215,7 +216,9 @@ class GameService:
 
             distance = self.graph_service.get_distance_to_base(rover.current_point_id)
 
-            self.rover_service.move_rover_back(rover, base_point_id, distance, order.weight)
+            self.rover_service.move_rover_back(
+                rover, base_point_id, distance, order.weight
+            )
 
     def _generate_events(self, game_state: GameState) -> None:
         self.event_service.create_random_event(turn=game_state.turn)
@@ -235,7 +238,9 @@ class GameService:
             needed_orders = max_orders - len(available_orders)
             add_orders = randint(1, needed_orders)
             for _ in range(add_orders):
-                self.order_service.create_random_order(list(map(lambda x: x.id, points_id)), max_weight_rover)
+                self.order_service.create_random_order(
+                    list(map(lambda x: x.id, points_id)), max_weight_rover
+                )
 
     def _refresh_game_state(self, game_state: GameState) -> None:
         game_state.active_rovers = self.rover_service.get_available_rovers()

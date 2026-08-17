@@ -1,4 +1,3 @@
-from datetime import datetime
 
 from app.models.event import Event
 from app.repositories.event_connector_repository import EventRepository

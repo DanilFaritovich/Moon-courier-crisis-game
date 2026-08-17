@@ -66,7 +66,13 @@ class RoverService:
 
         return rover.cargo + weight
 
-    def move_rover(self, rover: Rover, point_id: int, distance: int, weight: int) -> None:
+    def move_rover(
+        self, 
+        rover: Rover, 
+        point_id: int, 
+        distance: int, 
+        weight: int
+    ) -> None:
         """Change rover current point."""
 
         rover.current_point_id = point_id
@@ -75,17 +81,28 @@ class RoverService:
 
         self.repository.update_rover(rover)
 
-    def get_battery_after_move_back(self, rover: Rover, distance: int, weight: int) -> int:
-                """Calculate battery level after a move back."""
-        
-                return rover.battery + distance * (rover.cargo + weight)
+    def get_battery_after_move_back(
+        self, 
+        rover: Rover, 
+        distance: int, 
+        weight: int
+    ) -> int:
+        """Calculate battery level after a move back."""
+
+        return rover.battery + distance * (rover.cargo + weight)
         
     def get_cargo_after_move_back(self, rover: Rover, weight: int) -> int:
         """Calculate cargo level after a move back."""
 
         return rover.cargo - weight
 
-    def move_rover_back(self, rover: Rover, point_id: int, distance: int, weight: int) -> None:
+    def move_rover_back(
+            self, 
+            rover: Rover, 
+            point_id: int, 
+            distance: int, 
+            weight: int
+        ) -> None:
         """Change rover current point."""
 
         rover.current_point_id = point_id
