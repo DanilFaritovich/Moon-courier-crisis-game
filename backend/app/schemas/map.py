@@ -13,7 +13,7 @@ class MapPointData(BaseModel):
 class MapRoadData(BaseModel):
     from_point_id: int
     to_point_id: int
-    distance: float
+    distance: int
     risk: float
     speed_modifier: float
 

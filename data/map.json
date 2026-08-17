@@ -33,28 +33,28 @@
     {
       "from_point_id": 1,
       "to_point_id": 2,
-      "distance": 11.18,
+      "distance": 11,
       "risk": 0.2,
       "speed_modifier": 1.0
     },
     {
       "from_point_id": 1,
       "to_point_id": 3,
-      "distance": 14.42,
+      "distance": 14,
       "risk": 0.4,
       "speed_modifier": 0.8
     },
     {
       "from_point_id": 2,
       "to_point_id": 3,
-      "distance": 13.6,
+      "distance": 13,
       "risk": 0.7,
       "speed_modifier": 0.6
     },
     {
       "from_point_id": 4,
       "to_point_id": 3,
-      "distance": 13.6,
+      "distance": 6,
       "risk": 0.7,
       "speed_modifier": 0.6
     }

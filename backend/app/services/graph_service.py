@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 import networkx as nx
 from app.repositories.graph_connector_repository import GraphRepository
+from app.models.point import Point
 
 
 @dataclass
@@ -57,26 +58,32 @@ class GraphService:
 
         graph = self._get_graph()
 
-        return nx.shortest_path(
-            graph,
-            source=start_point_id,
-            target=end_point_id,
-            weight="distance",
-        )
+        try:
+            return nx.shortest_path(
+                graph,
+                source=start_point_id,
+                target=end_point_id,
+                weight="distance",
+            )
+        except nx.NetworkXNoPath:
+            return []
 
     def get_path_distance(
         self,
         path: list[int],
-    ) -> float:
+    ) -> int:
         """Calculate the total distance of a path."""
 
         graph = self._get_graph()
 
-        return nx.path_weight(
-            graph,
-            path,
-            weight="distance",
-        )
+        try:
+            return nx.path_weight(
+                graph,
+                path,
+                weight="distance",
+            )
+        except nx.NetworkXNoPath:
+            return 0
 
     def get_path_risk(
         self,
@@ -90,6 +97,16 @@ class GraphService:
             graph[u][v]["risk"]
             for u, v in zip(path, path[1:], strict=False)
         )
+
+    def get_base(self) -> Point:
+        return self.repository.get_base()
+
+    def get_distance_to_base(self, point_id: int) -> int:
+        path = self.find_path(point_id, self.get_base().id)
+        return self.get_path_distance(path)
+
+    def get_unbase(self) -> list[Point]:
+        return self.repository.get_unbase()
 
     def _get_graph(self) -> nx.Graph:
         """Return the current graph or raise if it has not been built."""

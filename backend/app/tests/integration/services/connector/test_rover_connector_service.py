@@ -16,6 +16,9 @@ class TestRoverConnectorService:
         assert created.id is not None
         assert created.name == "Rover A"
         assert created.cargo_capacity == 40
+        assert created.cargo == 0
+        assert created.battery_capacity == 100
+        assert created.battery == 100
         assert created.status == RoverStatus.IDLE
 
     def test_get_rover(self, db_session, point, rover):

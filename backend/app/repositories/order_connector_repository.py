@@ -25,3 +25,13 @@ class OrderRepository(ABC):
     def complete_order(self, order: Order) -> None:
         """Mark an order as completed."""
         ...
+
+    @abstractmethod
+    def assign_order(self, order: Order) -> None:
+        """Mark an order as assigned."""
+        ...
+
+    @abstractmethod
+    def unassign_order(self, order: Order) -> None:
+        """Mark an order as unassigned."""
+        ...

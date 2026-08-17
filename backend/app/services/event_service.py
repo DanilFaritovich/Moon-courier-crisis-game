@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from random import choice
+from random import choice, randint
 
 from app.models.event import Event, EventType
 from app.repositories.event_connector_repository import EventRepository
@@ -34,7 +34,7 @@ class EventService:
     def create_random_event(
         self,
         turn: int,
-        duration: int,
+        duration: int | None = None,
     ) -> Event:
         """Create a random game event."""
 
@@ -61,6 +61,8 @@ class EventService:
 
         title, description = event_data[event_type]
 
+        if duration is None:
+            duration = randint(1, 3)
 
         return self.create_event(
             event_type=event_type,

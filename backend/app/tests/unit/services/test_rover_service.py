@@ -12,14 +12,17 @@ class TestRoverService:
 
         rover = service.create_rover(
             name="Rover A",
-            cargo_capacity=40.0,
+            cargo_capacity=40,
+            battery_capacity=100,
             current_point_id=1,
         )
 
         assert isinstance(rover, Rover)
         assert rover.name == "Rover A"
-        assert rover.cargo_capacity == 40.0
+        assert rover.cargo_capacity == 40
+        assert rover.cargo == 0.0
         assert rover.current_point_id == 1
+        assert rover.battery_capacity == 100
         assert rover.battery == 100
         assert rover.status == RoverStatus.IDLE
 

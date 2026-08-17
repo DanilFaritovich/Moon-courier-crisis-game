@@ -48,7 +48,9 @@ def rover():
     return Rover(
         id=1,
         name="Rover A",
-        cargo_capacity=40.0,
+        cargo_capacity=40,
+        cargo=0,
+        battery_capacity=100,
         battery=100,
         current_point_id=1,
         status=RoverStatus.IDLE,
@@ -61,7 +63,7 @@ def rovers():
         Rover(
             id=1,
             name="Rover A",
-            cargo_capacity=40.0,
+            cargo_capacity=40,
             battery=100,
             current_point_id=1,
             status=RoverStatus.IDLE,
@@ -69,7 +71,7 @@ def rovers():
         Rover(
             id=2,
             name="Rover B",
-            cargo_capacity=40.0,
+            cargo_capacity=40,
             battery=100,
             current_point_id=2,
             status=RoverStatus.IDLE,

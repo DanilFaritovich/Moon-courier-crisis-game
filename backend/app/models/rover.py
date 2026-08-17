@@ -26,7 +26,13 @@ class Rover(Base):
     name: Mapped[str] = mapped_column(nullable=False)
 
     # Maximum cargo capacity in kilograms.
-    cargo_capacity: Mapped[float] = mapped_column(nullable=False)
+    cargo_capacity: Mapped[int] = mapped_column(nullable=False, default=30)
+
+    # Current cargo weight in kilograms.
+    cargo: Mapped[int] = mapped_column(nullable=False, default=0)
+
+    # Maximum battery capacity in percent.
+    battery_capacity: Mapped[int] = mapped_column(nullable=False, default=100)
 
     # Current battery level in percent.
     battery: Mapped[int] = mapped_column(nullable=False, default=100)

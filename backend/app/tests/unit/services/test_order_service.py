@@ -14,7 +14,7 @@ class TestOrderService:
 
         order = service.create_order(
             destination_point_id=10,
-            weight=25.0,
+            weight=25,
             reward=100,
             urgency=OrderUrgency.HIGH,
             status=OrderStatus.AVAILABLE
@@ -38,7 +38,7 @@ class TestOrderService:
 
         order = service.create_order(
             destination_point_id=10,
-            weight=25.0,
+            weight=25,
             reward=100,
         )
 

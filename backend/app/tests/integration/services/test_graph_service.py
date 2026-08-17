@@ -51,7 +51,7 @@ class TestGraphService:
             [1, 2, 3],
         )
 
-        assert distance == 24.78
+        assert distance == 24
 
     def test_get_path_risk(
         self,

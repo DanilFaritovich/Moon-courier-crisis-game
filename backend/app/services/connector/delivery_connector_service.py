@@ -19,6 +19,12 @@ class DeliveryConnectorRepository(DeliveryRepository):
 
         return delivery
 
+    def delete_delivery(self, delivery_id: int) -> None:
+        """Delete a delivery."""
+
+        self.db.delete(Delivery(delivery_id=delivery_id))
+        self.db.commit()
+
     def get_delivery(
         self,
         delivery_id: int,

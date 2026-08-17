@@ -26,6 +26,11 @@ class DeliveryService:
 
         return self.repository.create_delivery(delivery)
 
+    def delete_delivery(self, delivery_id: int) -> None:
+        """Delete a delivery."""
+
+        self.repository.delete_delivery(delivery_id)
+
     def get_delivery(
         self,
         delivery_id: int,

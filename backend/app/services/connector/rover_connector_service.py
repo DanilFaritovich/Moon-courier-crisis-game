@@ -24,6 +24,13 @@ class RoverConnectorService(RoverConnectorRepository):
 
         return self.db.get(Rover, rover_id)
 
+    def get_rover_with_max_weight(self) -> Rover | None:
+        """Return a rover with the highest weight capacity."""
+
+        return self.db.scalars(
+            select(Rover).order_by(Rover.cargo_capacity.desc())
+        ).first()
+
     def get_available_rovers(self) -> list[Rover]:
         """Return all rovers ready for delivery."""
 

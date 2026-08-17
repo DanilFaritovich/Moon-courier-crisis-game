@@ -53,19 +53,19 @@ class TestMapSeeder:
 
         assert roads[0].from_point_id == 1
         assert roads[0].to_point_id == 2
-        assert roads[0].distance == 11.18
+        assert roads[0].distance == 11
         assert roads[0].risk == 0.2
         assert roads[0].speed_modifier == 1.0
 
         assert roads[1].from_point_id == 1
         assert roads[1].to_point_id == 3
-        assert roads[1].distance == 14.42
+        assert roads[1].distance == 14
         assert roads[1].risk == 0.4
         assert roads[1].speed_modifier == 0.8
 
         assert roads[2].from_point_id == 2
         assert roads[2].to_point_id == 3
-        assert roads[2].distance == 13.6
+        assert roads[2].distance == 13
         assert roads[2].risk == 0.7
         assert roads[2].speed_modifier == 0.6
 

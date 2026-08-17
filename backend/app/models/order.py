@@ -37,7 +37,7 @@ class Order(Base):
     )
 
     # Cargo weight in kilograms.
-    weight: Mapped[float] = mapped_column(nullable=False)
+    weight: Mapped[int] = mapped_column(nullable=False)
 
     # Credits earned after a successful delivery.
     reward: Mapped[int] = mapped_column(nullable=False)
