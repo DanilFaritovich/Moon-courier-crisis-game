@@ -41,6 +41,7 @@ def db_delivery(db_session, order, rover):
     delivery = Delivery(
         order_id=order.id,
         rover_id=rover.id,
+        started_turn=1,
     )
 
     db_session.add(delivery)
@@ -70,10 +71,12 @@ def db_deliveries(db_session, rover):
         Delivery(
             order_id=orders[0].id,
             rover_id=rover.id,
+            started_turn=1,
         ),
         Delivery(
             order_id=orders[1].id,
             rover_id=rover.id,
+            started_turn=1,
         ),
     ]
 

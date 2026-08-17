@@ -16,6 +16,7 @@ class TestDeliveryConnectorRepository:
         delivery = Delivery(
             order_id=order.id,
             rover_id=rover.id,
+            started_turn=1,
         )
 
         result = repository.create_delivery(delivery)
@@ -24,6 +25,7 @@ class TestDeliveryConnectorRepository:
         assert result.order_id == order.id
         assert result.rover_id == rover.id
         assert result.status == DeliveryStatus.IN_PROGRESS
+        assert result.started_turn == 1
 
     def test_get_delivery(
         self,

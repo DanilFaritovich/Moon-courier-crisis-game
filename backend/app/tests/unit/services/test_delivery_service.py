@@ -15,10 +15,12 @@ class TestDeliveryService:
         delivery = service.create_delivery(
             order_id=10,
             rover_id=5,
+            started_turn=1,
         )
 
         assert delivery.order_id == 10
         assert delivery.rover_id == 5
+        assert delivery.started_turn == 1
         
         delivery_repository.create_delivery.assert_called_once_with(
             delivery
