@@ -1,0 +1,62 @@
+{
+  "points": [
+    {
+      "id": 1,
+      "name": "Lunar Base",
+      "type": "base",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": 2,
+      "name": "Crater Alpha",
+      "type": "delivery",
+      "x": 10,
+      "y": 5
+    },
+    {
+      "id": 3,
+      "name": "Crater Beta",
+      "type": "delivery",
+      "x": -8,
+      "y": 12
+    },
+    {
+      "id": 4,
+      "name": "Crater Omega",
+      "type": "delivery",
+      "x": -15,
+      "y": 20
+    }
+  ],
+  "roads": [
+    {
+      "from_point_id": 1,
+      "to_point_id": 2,
+      "distance": 11.18,
+      "risk": 0.2,
+      "speed_modifier": 1.0
+    },
+    {
+      "from_point_id": 1,
+      "to_point_id": 3,
+      "distance": 14.42,
+      "risk": 0.4,
+      "speed_modifier": 0.8
+    },
+    {
+      "from_point_id": 2,
+      "to_point_id": 3,
+      "distance": 13.6,
+      "risk": 0.7,
+      "speed_modifier": 0.6
+    },
+    {
+      "from_point_id": 4,
+      "to_point_id": 3,
+      "distance": 13.6,
+      "risk": 0.7,
+      "speed_modifier": 0.6
+    }
+  ]
+}

@@ -1,10 +1,14 @@
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 import pytest
 from app.db.base import Base
 from app.models.delivery import Delivery
 from app.models.event import Event, EventType
 from app.models.order import Order, OrderStatus
+from app.seeders.map_seeder import MapSeeder
+from app.services.connector.graph_connector_service import GraphConnector
+from app.services.graph_service import GraphService
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
@@ -123,3 +127,33 @@ def events(db_session):
     db_session.refresh(expired_event)
 
     return [active_event, expired_event]
+
+# ========================
+# Graph
+# ========================
+
+@pytest.fixture
+def graph_service(
+    db_session,
+    seed_map,
+):
+    """Create a GraphService with the seeded map."""
+
+    repository = GraphConnector(db_session)
+
+    return GraphService(repository)
+
+# ========================
+# MapSeeder
+# ========================
+
+MAP_PATH = Path("data/map.json")
+
+@pytest.fixture
+def seed_map(db_session):
+    """Seed the initial game map."""
+
+    MapSeeder(
+        session=db_session,
+        map_path=Path("data/map.json"),
+    ).seed()
