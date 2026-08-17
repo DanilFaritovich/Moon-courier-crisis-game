@@ -12,20 +12,22 @@ class TestEventService:
 
         service = EventService(event_repository)
 
-        expires_at = datetime.now(timezone.utc) + timedelta(hours=3)
+        turn = 1
+        duration = 3
 
         event = service.create_event(
             event_type=EventType.DUST_STORM,
             title="Dust Storm",
             description="A dust storm reduces rover speed.",
-            expires_at=expires_at,
+            turn=turn,
+            duration=duration,
         )
 
         assert isinstance(event, Event)
         assert event.event_type == EventType.DUST_STORM
         assert event.title == "Dust Storm"
         assert event.description == "A dust storm reduces rover speed."
-        assert event.expires_at == expires_at
+        assert event.end_turn == turn + duration - 1
 
         event_repository.create_event.assert_called_once_with(event)
 
@@ -36,8 +38,12 @@ class TestEventService:
 
         service = EventService(event_repository)
 
+        turn = 1
+        duration = 3
+
         event = service.create_random_event(
-            duration=3,
+            turn=turn,
+            duration=duration,
         )
 
         assert isinstance(event, Event)
@@ -90,8 +96,10 @@ class TestEventService:
 
         service = EventService(event_repository)
 
-        result = service.get_active_events()
+        turn = 1
+
+        result = service.get_active_events(turn=turn)
 
         assert result == events
 
-        event_repository.get_active_events.assert_called_once_with()
+        event_repository.get_active_events.assert_called_once_with(turn)

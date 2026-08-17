@@ -122,7 +122,8 @@ def event():
         event_type=EventType.DUST_STORM,
         title="Dust Storm",
         description="A dust storm reduces rover speed.",
-        expires_at=datetime.now(timezone.utc) + timedelta(hours=3),
+        start_turn=1,
+        end_turn=3,
     )
 
 
@@ -134,13 +135,15 @@ def events():
             event_type=EventType.DUST_STORM,
             title="Dust Storm",
             description="A dust storm reduces rover speed.",
-            expires_at=datetime.now(timezone.utc) + timedelta(hours=3),
+            start_turn=1,
+            end_turn=3,
         ),
         Event(
             id=2,
             event_type=EventType.SOLAR_STORM,
             title="Solar Storm",
             description="Solar activity increases battery consumption.",
-            expires_at=datetime.now(timezone.utc) + timedelta(hours=2),
+            start_turn=1,
+            end_turn=3,
         ),
     ]

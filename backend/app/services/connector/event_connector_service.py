@@ -26,13 +26,14 @@ class EventConnectorRepository(EventRepository):
 
         return self.db.get(Event, event_id)
 
-    def get_active_events(self) -> list[Event]:
-        """Return events that are currently active."""
+    def get_active_events(self, turn: int) -> list[Event]:
+        """Return events active on the given turn."""
 
         return list(
             self.db.scalars(
                 select(Event).where(
-                    Event.expires_at > datetime.utcnow(),
+                    Event.start_turn <= turn,
+                    Event.end_turn >= turn,
                 )
             ).all()
         )

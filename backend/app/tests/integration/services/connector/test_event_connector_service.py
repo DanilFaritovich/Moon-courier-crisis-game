@@ -14,7 +14,8 @@ class TestEventConnectorRepository:
             event_type=EventType.DUST_STORM,
             title="Dust Storm",
             description="A dust storm reduces rover speed.",
-            expires_at=datetime.now(timezone.utc) + timedelta(hours=3),
+            start_turn=1,
+            end_turn=3,
         )
 
         result = repository.create_event(event)
@@ -23,7 +24,8 @@ class TestEventConnectorRepository:
         assert result.event_type == EventType.DUST_STORM
         assert result.title == "Dust Storm"
         assert result.description == "A dust storm reduces rover speed."
-        assert result.expires_at == event.expires_at
+        assert result.start_turn == event.start_turn
+        assert result.end_turn == event.end_turn
 
     def test_get_event(self, db_session, event):
         repository = EventConnectorRepository(db_session)
@@ -49,16 +51,46 @@ class TestEventConnectorRepository:
     ):
         repository = EventConnectorRepository(db_session)
 
-        result = repository.get_active_events()
+        turn = 1
+
+        result = repository.get_active_events(turn=turn)
+
+        assert len(result) == 1
+        assert result[0].id == events[1].id
+
+        turn = 2
+        
+        result = repository.get_active_events(turn=turn)
+
+        assert len(result) == 2
+        assert result[0].id == events[0].id
+        assert result[1].id == events[1].id
+
+        turn = 3
+                
+        result = repository.get_active_events(turn=turn)
 
         assert len(result) == 1
         assert result[0].id == events[0].id
+
+        turn = 5
+                        
+        result = repository.get_active_events(turn=turn)
+
+        assert len(result) == 1
+        assert result[0].id == events[0].id
+
+        turn = 6
+                        
+        result = repository.get_active_events(turn=turn)
+
+        assert len(result) == 0
 
     def test_update_event(self, db_session, event):
         repository = EventConnectorRepository(db_session)
 
         event.title = "Updated Dust Storm"
-        event.expires_at = datetime.now(timezone.utc) + timedelta(hours=5)
+        event.end_turn = event.end_turn + 1
 
         result = repository.update_event(event)
 
@@ -70,4 +102,4 @@ class TestEventConnectorRepository:
 
         assert updated_event is not None
         assert updated_event.title == "Updated Dust Storm"
-        assert updated_event.expires_at == event.expires_at
+        assert updated_event.end_turn == event.end_turn

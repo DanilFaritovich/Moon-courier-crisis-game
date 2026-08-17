@@ -16,7 +16,8 @@ class EventService:
         event_type: EventType,
         title: str,
         description: str,
-        expires_at: datetime,
+        turn: int,
+        duration: int,
     ) -> Event:
         """Create a new game event."""
 
@@ -24,13 +25,15 @@ class EventService:
             event_type=event_type,
             title=title,
             description=description,
-            expires_at=expires_at,
+            start_turn=turn,
+            end_turn=turn + duration - 1,
         )
 
         return self.repository.create_event(event)
 
     def create_random_event(
         self,
+        turn: int,
         duration: int,
     ) -> Event:
         """Create a random game event."""
@@ -58,16 +61,13 @@ class EventService:
 
         title, description = event_data[event_type]
 
-        expires_at = datetime.now(timezone.utc) + timedelta(
-            hours=duration,
-        )
-
 
         return self.create_event(
             event_type=event_type,
             title=title,
             description=description,
-            expires_at=expires_at,
+            turn=turn,
+            duration=duration,
         )
 
     def get_event(self, event_id: int) -> Event | None:
@@ -75,7 +75,7 @@ class EventService:
 
         return self.repository.get_event(event_id)
 
-    def get_active_events(self) -> list[Event]:
+    def get_active_events(self, turn: int) -> list[Event]:
         """Return currently active game events."""
 
-        return self.repository.get_active_events()
+        return self.repository.get_active_events(turn)

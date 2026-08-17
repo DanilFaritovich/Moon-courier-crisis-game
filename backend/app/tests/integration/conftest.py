@@ -92,7 +92,8 @@ def event(db_session):
         event_type=EventType.DUST_STORM,
         title="Dust Storm",
         description="A dust storm reduces rover speed.",
-        expires_at=datetime.now(timezone.utc) + timedelta(hours=3),
+        start_turn=1,
+        end_turn=3,
     )
 
     db_session.add(event)
@@ -110,14 +111,16 @@ def events(db_session):
         event_type=EventType.DUST_STORM,
         title="Dust Storm",
         description="A dust storm reduces rover speed.",
-        expires_at=now + timedelta(hours=3),
+        start_turn=2,
+        end_turn=5,
     )
 
     expired_event = Event(
         event_type=EventType.SOLAR_STORM,
         title="Solar Storm",
         description="Solar activity increases battery consumption.",
-        expires_at=now - timedelta(hours=3),
+        start_turn=1,
+        end_turn=2
     )
 
     db_session.add_all([active_event, expired_event])
