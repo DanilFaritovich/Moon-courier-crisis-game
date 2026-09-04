@@ -1,4 +1,3 @@
-
 from app.models.event import Event
 from app.repositories.event_connector_repository import EventRepository
 from sqlalchemy import select
@@ -15,8 +14,7 @@ class EventConnectorRepository(EventRepository):
         """Create and persist a game event."""
 
         self.db.add(event)
-        self.db.commit()
-        self.db.refresh(event)
+        self.db.flush()
 
         return event
 
@@ -40,7 +38,6 @@ class EventConnectorRepository(EventRepository):
     def update_event(self, event: Event) -> Event:
         """Update and persist a game event."""
 
-        self.db.commit()
-        self.db.refresh(event)
+        self.db.flush()
 
         return event

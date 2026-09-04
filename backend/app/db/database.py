@@ -19,10 +19,12 @@ SessionLocal = sessionmaker(
     autocommit=False,
 )
 
+
 def create_tables() -> None:
     """Create all database tables."""
-    
+
     Base.metadata.create_all(bind=engine)
+
 
 def get_db() -> Generator[Session, None, None]:
     """Provide a database session and close it after use."""

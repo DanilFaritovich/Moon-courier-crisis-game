@@ -67,46 +67,44 @@ class RoverService:
         return rover.cargo + weight
 
     def move_rover(
-        self, 
-        rover: Rover, 
-        point_id: int, 
-        distance: int, 
-        weight: int
+        self, rover: Rover, point_id: int, distance: int, weight: int
     ) -> None:
         """Change rover current point."""
 
         rover.current_point_id = point_id
-        rover.cargo = self.get_cargo_after_move(rover, weight)
-        rover.battery = self.get_battery_after_move(rover, distance, weight)
+        cargo = self.get_cargo_after_move(rover, weight)
+        battery = self.get_battery_after_move(rover, distance, weight)
+
+        rover.cargo = cargo
+        rover.battery = battery
 
         self.repository.update_rover(rover)
 
     def get_battery_after_move_back(
-        self, 
-        rover: Rover, 
-        distance: int, 
-        weight: int
+        self,
+        rover: Rover,
+        distance: int,
     ) -> int:
         """Calculate battery level after a move back."""
 
-        return rover.battery + distance * (rover.cargo + weight)
-        
+        return rover.battery + distance * (rover.cargo)
+
     def get_cargo_after_move_back(self, rover: Rover, weight: int) -> int:
         """Calculate cargo level after a move back."""
 
         return rover.cargo - weight
 
     def move_rover_back(
-            self, 
-            rover: Rover, 
-            point_id: int, 
-            distance: int, 
-            weight: int
-        ) -> None:
+        self, rover: Rover, point_id: int, distance: int, weight: int
+    ) -> None:
         """Change rover current point."""
 
         rover.current_point_id = point_id
-        rover.cargo = self.get_cargo_after_move_back(rover, weight)
-        rover.battery = self.get_battery_after_move_back(rover, distance, 0)
+
+        cargo = self.get_cargo_after_move_back(rover, weight)
+        battery = self.get_battery_after_move_back(rover, distance)
+
+        rover.cargo = cargo
+        rover.battery = battery
 
         self.repository.update_rover(rover)

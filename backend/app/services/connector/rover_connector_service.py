@@ -14,8 +14,7 @@ class RoverConnectorService(RoverConnectorRepository):
         """Persist a new rover."""
 
         self.db.add(rover)
-        self.db.commit()
-        self.db.refresh(rover)
+        self.db.flush()
 
         return rover
 
@@ -35,13 +34,12 @@ class RoverConnectorService(RoverConnectorRepository):
         """Return all rovers ready for delivery."""
 
         return list(
-            self.db.scalars(
-                select(Rover).where(Rover.status == RoverStatus.IDLE)
-            ).all()
+            self.db.scalars(select(Rover).where(Rover.status == RoverStatus.IDLE)).all()
         )
 
-    def update_rover(self, rover: Rover) -> None:
+    def update_rover(self, rover: Rover) -> Rover:
         """Persist rover changes."""
 
-        self.db.commit()
-        self.db.refresh(rover)
+        self.db.flush()
+
+        return rover

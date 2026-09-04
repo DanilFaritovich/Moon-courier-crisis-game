@@ -27,6 +27,6 @@ class RoverConnectorRepository(ABC):
         ...
 
     @abstractmethod
-    def update_rover(self, rover: Rover) -> None:
+    def update_rover(self, rover: Rover) -> Rover:
         """Persist rover changes."""
         ...

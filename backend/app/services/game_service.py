@@ -1,4 +1,3 @@
-
 from dataclasses import dataclass, field
 from random import randint
 from uuid import UUID, uuid4
@@ -7,6 +6,7 @@ from app.models.delivery import Delivery
 from app.models.event import Event
 from app.models.order import Order
 from app.models.rover import Rover
+from app.repositories.unit_of_work import UnitOfWork
 from app.services.delivery_service import DeliveryService
 from app.services.event_service import EventService
 from app.services.graph_service import GraphService, GraphState
@@ -28,17 +28,20 @@ class GameState:
     money: int = 0
     score: int = 0
 
+
 class GameService:
     """Manage game initialization."""
 
     def __init__(
         self,
+        unit_of_work: UnitOfWork,
         graph_service: GraphService,
         rover_service: RoverService,
         order_service: OrderService,
         delivery_service: DeliveryService,
         event_service: EventService,
     ):
+        self.unit_of_work = unit_of_work
         self.graph_service = graph_service
         self.rover_service = rover_service
         self.order_service = order_service
@@ -70,9 +73,7 @@ class GameService:
             active_deliveries=deliveries,
         )
 
-        game_state.active_events = self.event_service.get_active_events(
-            game_state.turn
-        )
+        game_state.active_events = self.event_service.get_active_events(game_state.turn)
 
         self.game_state = game_state
 
@@ -83,38 +84,46 @@ class GameService:
 
         game_state = self._get_game_state()
         rover = self.rover_service.get_rover(rover_id)
-        order = self.order_service.get_order(order_id)
 
         if rover is None:
             raise RuntimeError(f"Rover {rover_id} not found.")
+
+        order = self.order_service.get_order(order_id)
+
         if order is None:
             raise RuntimeError(f"Order {order_id} not found.")
 
-        self.delivery_service.create_delivery(
-            order_id=order_id,
-            rover_id=rover_id,
-            started_turn=game_state.turn,
-        )
+        try:
+            self.delivery_service.create_delivery(
+                order_id=order_id,
+                rover_id=rover_id,
+                started_turn=game_state.turn,
+            )
 
-        self.order_service.assign_order(order)
+            self.order_service.assign_order(order)
 
-        path = self.graph_service.find_path(
-            start_point_id=rover.current_point_id,
-            end_point_id=order.destination_point_id,
-        )
-        distance = self.graph_service.get_path_distance(
-            path=path,
-        )
+            path = self.graph_service.find_path(
+                start_point_id=rover.current_point_id,
+                end_point_id=order.destination_point_id,
+            )
+            distance = self.graph_service.get_path_distance(
+                path=path,
+            )
 
-        self.rover_service.move_rover(
-            rover=rover,
-            point_id=order.destination_point_id,
-            distance=distance,
-            weight=order.weight,
-        )
+            self.rover_service.move_rover(
+                rover=rover,
+                point_id=order.destination_point_id,
+                distance=distance,
+                weight=order.weight,
+            )
 
-        game_state.active_deliveries = self.delivery_service.get_active_deliveries()
-        game_state.active_rovers = self.rover_service.get_available_rovers()
+            game_state.active_deliveries = self.delivery_service.get_active_deliveries()
+            game_state.active_rovers = self.rover_service.get_available_rovers()
+
+            self.unit_of_work.commit()
+        except Exception as e:
+            self.unit_of_work.rollback()
+            raise e
 
         return game_state
 
@@ -137,23 +146,31 @@ class GameService:
         if order is None:
             raise RuntimeError(f"Order {delivery.order_id} not found.")
 
-        self.delivery_service.delete_delivery(delivery_id)
+        try:
+            self.delivery_service.delete_delivery(delivery_id)
 
-        self.order_service.unassign_order(order)
+            self.order_service.unassign_order(order)
 
-        point_id = self.graph_service.get_base().id
+            point_id = self.graph_service.get_base().id
 
-        distance = self.graph_service.get_distance_to_base(rover.current_point_id)
+            distance = self.graph_service.get_distance_to_base(
+                rover.current_point_id,
+            )
 
-        self.rover_service.move_rover(
-            rover,
-            point_id=point_id,
-            distance=distance,
-            weight=order.weight,
-        )
+            self.rover_service.move_rover_back(
+                rover,
+                point_id=point_id,
+                distance=distance,
+                weight=order.weight,
+            )
 
-        game_state.active_deliveries = self.delivery_service.get_active_deliveries()
-        game_state.active_rovers = self.rover_service.get_available_rovers()
+            game_state.active_deliveries = self.delivery_service.get_active_deliveries()
+            game_state.active_rovers = self.rover_service.get_available_rovers()
+
+            self.unit_of_work.commit()
+        except Exception as e:
+            self.unit_of_work.rollback()
+            raise e
 
         return game_state
 
@@ -192,7 +209,6 @@ class GameService:
                 continue
 
             available_orders.append(order)
-
 
         return available_orders
 
@@ -249,20 +265,27 @@ class GameService:
         game_state.active_events = self.event_service.get_active_events(
             game_state.turn,
         )
-    
+
     def next_turn(self) -> GameState:
         """Advance the game turn."""
 
         game_state = self._get_game_state()
-        game_state.turn += 1
 
-        # Complete deliveries
-        self._complete_deliveries(game_state)
-        # Generate new events
-        self._generate_events(game_state)
-        # Generate new orders
-        self._generate_orders(game_state)
-        # Update game state
-        self._refresh_game_state(game_state)
+        try:
+            game_state.turn += 1
+
+            # Complete deliveries
+            self._complete_deliveries(game_state)
+            # Generate new events
+            self._generate_events(game_state)
+            # Generate new orders
+            self._generate_orders(game_state)
+            # Update game state
+            self._refresh_game_state(game_state)
+
+            self.unit_of_work.commit()
+        except Exception as e:
+            self.unit_of_work.rollback()
+            raise e
 
         return game_state

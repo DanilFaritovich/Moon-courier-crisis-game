@@ -4,7 +4,7 @@ from app.models.order import Order
 
 
 class OrderRepository(ABC):
-    """"Abstract repository for order data."""
+    """ "Abstract repository for order data."""
 
     @abstractmethod
     def create_order(self, order: Order) -> Order:
@@ -22,16 +22,6 @@ class OrderRepository(ABC):
         ...
 
     @abstractmethod
-    def complete_order(self, order: Order) -> None:
-        """Mark an order as completed."""
-        ...
-
-    @abstractmethod
-    def assign_order(self, order: Order) -> None:
-        """Mark an order as assigned."""
-        ...
-
-    @abstractmethod
-    def unassign_order(self, order: Order) -> None:
-        """Mark an order as unassigned."""
+    def update_order(self, order: Order) -> Order:
+        """Update an existing delivery order."""
         ...

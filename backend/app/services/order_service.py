@@ -17,7 +17,7 @@ class OrderService:
         weight: int,
         reward: int,
         urgency: OrderUrgency = OrderUrgency.MEDIUM,
-        status: OrderStatus = OrderStatus.AVAILABLE
+        status: OrderStatus = OrderStatus.AVAILABLE,
     ) -> Order:
         """Create and persist a new delivery order."""
 
@@ -26,7 +26,7 @@ class OrderService:
             weight=weight,
             reward=reward,
             urgency=urgency,
-            status=status
+            status=status,
         )
 
         return self.repository.create_order(order)
@@ -38,7 +38,7 @@ class OrderService:
             weight=randint(1, max_weight),
             reward=randint(40, 100),
             urgency=choice(list(OrderUrgency)),
-            status=OrderStatus.AVAILABLE
+            status=OrderStatus.AVAILABLE,
         )
         return self.repository.create_order(order)
 
@@ -53,10 +53,13 @@ class OrderService:
         return self.repository.get_available_orders()
 
     def complete_order(self, order: Order) -> None:
-        self.repository.complete_order(order)
+        order.status = OrderStatus.COMPLETED
+        self.repository.update_order(order)
 
     def assign_order(self, order: Order) -> None:
-        self.repository.assign_order(order)
+        order.status = OrderStatus.ASSIGNED
+        self.repository.update_order(order)
 
     def unassign_order(self, order: Order) -> None:
-        self.repository.unassign_order(order)
+        order.status = OrderStatus.AVAILABLE
+        self.repository.update_order(order)

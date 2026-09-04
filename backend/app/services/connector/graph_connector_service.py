@@ -14,39 +14,24 @@ class GraphConnector(GraphRepository):
     def get_points(self) -> list[Point]:
         """Return all graph points from the database."""
 
-        return list(
-            self.db.scalars(
-                select(Point)
-            ).all()
-        )
+        return list(self.db.scalars(select(Point)).all())
 
     def get_point_by_id(self, point_id: int) -> Point:
         """Return a graph point from the database by id."""
 
-        return self.db.scalars(
-            select(Point).where(Point.id == point_id)
-        ).one()
+        return self.db.scalars(select(Point).where(Point.id == point_id)).one()
 
     def get_base(self) -> Point:
-        return self.db.scalars(
-            select(Point).where(Point.type == PointType.BASE)
-        ).one()
-        
+        return self.db.scalars(select(Point).where(Point.type == PointType.BASE)).one()
 
     def get_unbase(self) -> list[Point]:
         """Return all graph points from the database."""
 
         return list(
-            self.db.scalars(
-                select(Point).where(Point.type != PointType.BASE)
-            ).all()
+            self.db.scalars(select(Point).where(Point.type != PointType.BASE)).all()
         )
 
     def get_roads(self) -> list[Road]:
         """Return all graph roads from the database."""
 
-        return list(
-            self.db.scalars(
-                select(Road)
-            ).all()
-        )
+        return list(self.db.scalars(select(Road)).all())

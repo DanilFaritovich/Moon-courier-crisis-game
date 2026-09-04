@@ -14,11 +14,9 @@ class OrderConnector(OrderRepository):
         """Create and persist a new delivery order."""
 
         self.db.add(order)
-        self.db.commit()
-        self.db.refresh(order)
+        self.db.flush()
 
         return order
-
 
     def get_order(self, order_id: int) -> Order | None:
         return self.db.get(Order, order_id)
@@ -30,14 +28,9 @@ class OrderConnector(OrderRepository):
             ).all()
         )
 
-    def complete_order(self, order: Order) -> None:
-        order.status = OrderStatus.COMPLETED
-        self.db.commit()
+    def update_order(self, order: Order) -> Order:
+        """Update an existing delivery order."""
 
-    def assign_order(self, order: Order) -> None:
-        order.status = OrderStatus.ASSIGNED
-        self.db.commit()
+        self.db.flush()
 
-    def unassign_order(self, order: Order) -> None:
-        order.status = OrderStatus.AVAILABLE
-        self.db.commit()
+        return order

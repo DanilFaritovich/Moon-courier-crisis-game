@@ -1,117 +1,134 @@
+import pytest
 from app.models.order import Order, OrderStatus, OrderUrgency
-from app.models.point import Point, PointType
 from app.services.connector.order_connector_service import OrderConnector
 
 
-class TestOrderConnectorRepository:
-    def test_create_order(self, db_session):
-        """Create and persist an order in the database."""
+@pytest.fixture
+def repository(
+    db_session,
+) -> OrderConnector:
+    return OrderConnector(db_session)
 
-        point = Point(
-            id=1,
-            name="Delivery Point",
-            type=PointType.DELIVERY,
-            x=100,
-            y=100,
-        )
 
-        db_session.add(point)
-        db_session.commit()
+@pytest.fixture
+def db_order(
+    db_session,
+    order: Order,
+) -> Order:
+    db_session.add(order)
+    db_session.flush()
 
-        repository = OrderConnector(db_session)
+    return order
 
-        order = Order(
-            destination_point_id=point.id,
-            weight=25.0,
-            reward=100,
-            urgency=OrderUrgency.HIGH,
-        )
 
-        created_order = repository.create_order(order)
+@pytest.fixture
+def db_orders(
+    db_session,
+    orders: list[Order],
+) -> list[Order]:
+    db_session.add_all(orders)
+    db_session.flush()
 
-        assert created_order.id is not None
-        assert created_order.destination_point_id == point.id
-        assert created_order.weight == 25.0
-        assert created_order.reward == 100
-        assert created_order.urgency == OrderUrgency.HIGH
-        assert created_order.status == OrderStatus.AVAILABLE
+    return orders
 
-    def test_get_order(self, db_session, point):
-        """Return an order by its identifier."""
 
-        order = Order(
-            id=1,
-            destination_point_id=1,
-            weight=10.0,
-            reward=50,
-        )
+@pytest.fixture
+def db_orders_by_status(
+    db_session,
+    orders_by_status: list[Order],
+) -> list[Order]:
+    db_session.add_all(orders_by_status)
+    db_session.flush()
 
-        db_session.add_all([point, order])
-        db_session.commit()
+    return orders_by_status
 
-        repository = OrderConnector(db_session)
 
-        result = repository.get_order(1)
+class TestOrderConnector:
+    def test_create_order(
+        self,
+        repository: OrderConnector,
+        order: Order,
+    ):
+        result = repository.create_order(order)
 
-        assert result is not None
-        assert result.id == 1
-        assert result.destination_point_id == 1
-        assert result.weight == 10.0
-        assert result.reward == 50
+        assert result is order
+        assert result.id is not None
 
-    def test_get_order_returns_none_for_missing_order(self, db_session):
-        """Return None when the order does not exist."""
+        assert result.destination_point_id == order.destination_point_id
+        assert result.weight == order.weight
+        assert result.reward == order.reward
+        assert result.urgency == order.urgency
+        assert result.status == order.status
 
-        repository = OrderConnector(db_session)
+    def test_get_order(
+        self,
+        repository: OrderConnector,
+        db_order: Order,
+    ):
+        order_id = db_order.id
 
-        result = repository.get_order(999)
+        result = repository.get_order(order_id)
+
+        assert result is db_order
+
+    def test_get_order_not_found(
+        self,
+        repository: OrderConnector,
+    ):
+        order_id = 999
+
+        result = repository.get_order(order_id)
 
         assert result is None
 
-    def test_get_available_orders(self, db_session, point):
-        """Return only orders with AVAILABLE status."""
+    def test_get_available_orders(
+        self,
+        repository: OrderConnector,
+        db_orders_by_status: list[Order],
+    ):
+        result = repository.get_available_orders()
 
-        available_order = Order(
-            id=1,
-            destination_point_id=1,
-            weight=10.0,
-            reward=50,
-            status=OrderStatus.AVAILABLE,
-        )
+        assert result == [db_orders_by_status[0]]
 
-        completed_order = Order(
-            id=2,
-            destination_point_id=1,
-            weight=20.0,
-            reward=100,
-            status=OrderStatus.COMPLETED,
-        )
+    def test_get_available_orders_without_available_orders(
+        self,
+        repository: OrderConnector,
+        db_orders: list[Order],
+    ):
+        for order in db_orders:
+            order.status = OrderStatus.ASSIGNED
 
-        db_session.add_all([
-            point,
-            available_order,
-            completed_order,
-        ])
-        db_session.commit()
+        result = repository.get_available_orders()
 
-        repository = OrderConnector(db_session)
+        assert result == []
 
-        orders = repository.get_available_orders()
+    def test_update_order(
+        self,
+        repository: OrderConnector,
+        db_order: Order,
+    ):
+        weight = 10
+        reward = 120
+        urgency = OrderUrgency.HIGH
+        status = OrderStatus.ASSIGNED
 
-        assert len(orders) == 1
-        assert orders[0].id == 1
-        assert orders[0].status == OrderStatus.AVAILABLE
+        db_order.weight = weight
+        db_order.reward = reward
+        db_order.urgency = urgency
+        db_order.status = status
 
-    def test_complete_order(self, db_session, point, order):
-        """Change an order status to COMPLETED."""
+        result = repository.update_order(db_order)
 
-        db_session.add_all([point, order])
-        db_session.commit()
+        assert result is db_order
+        assert result.weight == weight
+        assert result.reward == reward
+        assert result.urgency == urgency
+        assert result.status == status
 
-        repository = OrderConnector(db_session)
+        persisted_order = repository.get_order(db_order.id)
 
-        repository.complete_order(order)
-
-        db_session.refresh(order)
-
-        assert order.status == OrderStatus.COMPLETED
+        assert persisted_order is db_order
+        assert persisted_order.weight == weight
+        assert persisted_order.reward == reward
+        assert persisted_order.urgency == urgency
+        assert persisted_order.status == status

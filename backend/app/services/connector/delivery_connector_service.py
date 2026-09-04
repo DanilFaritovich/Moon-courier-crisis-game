@@ -14,16 +14,20 @@ class DeliveryConnectorRepository(DeliveryRepository):
         """Create and persist a delivery."""
 
         self.db.add(delivery)
-        self.db.commit()
-        self.db.refresh(delivery)
+        self.db.flush()
 
         return delivery
 
     def delete_delivery(self, delivery_id: int) -> None:
         """Delete a delivery."""
 
-        self.db.delete(Delivery(delivery_id=delivery_id))
-        self.db.commit()
+        delivery = self.db.get(Delivery, delivery_id)
+
+        if delivery is None:
+            return
+
+        self.db.delete(delivery)
+        self.db.flush()
 
     def get_delivery(
         self,
@@ -50,7 +54,6 @@ class DeliveryConnectorRepository(DeliveryRepository):
     def update_delivery(self, delivery: Delivery) -> Delivery:
         """Update and persist a delivery."""
 
-        self.db.commit()
-        self.db.refresh(delivery)
+        self.db.flush()
 
         return delivery

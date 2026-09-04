@@ -25,7 +25,7 @@ class GraphService:
         points = self.repository.get_points()
         roads = self.repository.get_roads()
 
-        graph = nx.Graph()
+        graph: nx.Graph = nx.Graph()
 
         for point in points:
             graph.add_node(
@@ -65,7 +65,7 @@ class GraphService:
                 target=end_point_id,
                 weight="distance",
             )
-        except nx.NetworkXNoPath:
+        except (nx.NetworkXNoPath, nx.NodeNotFound):
             return []
 
     def get_path_distance(
@@ -93,10 +93,7 @@ class GraphService:
 
         graph = self._get_graph()
 
-        return sum(
-            graph[u][v]["risk"]
-            for u, v in zip(path, path[1:], strict=False)
-        )
+        return sum(graph[u][v]["risk"] for u, v in zip(path, path[1:], strict=False))
 
     def get_base(self) -> Point:
         return self.repository.get_base()
