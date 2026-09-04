@@ -1,54 +1,96 @@
+import pytest
 from app.models.point import Point, PointType
 from app.models.road import Road
 from app.services.connector.graph_connector_service import GraphConnector
+from sqlalchemy.exc import NoResultFound
 
 
-class TestGraphService:
-    def test_get_map(self, db_session):
-        """Return points and roads stored in the database."""
+@pytest.fixture
+def repository(
+    db_session,
+) -> GraphConnector:
+    return GraphConnector(db_session)
 
-        point_1 = Point(
-            id=1,
-            name="Lunar Base",
-            type=PointType.BASE,
-            x=0,
-            y=0,
-        )
 
-        point_2 = Point(
-            id=2,
-            name="Delivery Point",
-            type=PointType.DELIVERY,
-            x=100,
-            y=100,
-        )
+@pytest.fixture
+def db_points(
+    db_session,
+    points: list[Point],
+) -> list[Point]:
+    db_session.add_all(points)
+    db_session.flush()
 
-        road = Road(
-            id=1,
-            from_point_id=1,
-            to_point_id=2,
-            distance=10.0,
-            risk=0.2,
-            speed_modifier=1.0,
-        )
+    return points
 
-        db_session.add_all([
-            point_1,
-            point_2,
-            road,
-        ])
-        db_session.commit()
 
-        service = GraphConnector(db_session)
+@pytest.fixture
+def db_roads(
+    db_session,
+    roads: list[Road],
+    db_points: list[Point],
+) -> list[Road]:
+    db_session.add_all(roads)
+    db_session.flush()
 
-        points, roads = service.get_points(), service.get_roads()
+    return roads
 
-        assert len(points) == 2
-        assert len(roads) == 1
 
-        assert points[0].name == "Lunar Base"
-        assert points[1].name == "Delivery Point"
+class TestGraphConnector:
+    def test_get_points(
+        self,
+        repository: GraphConnector,
+        db_points: list[Point],
+    ):
+        result = repository.get_points()
 
-        assert roads[0].from_point_id == 1
-        assert roads[0].to_point_id == 2
-        assert roads[0].distance == 10.0
+        assert result == db_points
+
+    def test_get_point_by_id(
+        self,
+        repository: GraphConnector,
+        db_points: list[Point],
+    ):
+        point_id = 2
+
+        result = repository.get_point_by_id(point_id)
+
+        assert result is db_points[1]
+
+    def test_get_point_by_id_not_found(
+        self,
+        repository: GraphConnector,
+        db_points: list[Point],
+    ):
+        point_id = 999
+
+        with pytest.raises(NoResultFound):
+            repository.get_point_by_id(point_id)
+
+    def test_get_base(
+        self,
+        repository: GraphConnector,
+        db_points: list[Point],
+    ):
+        result = repository.get_base()
+
+        assert result is db_points[0]
+        assert result.type == PointType.BASE
+
+    def test_get_unbase(
+        self,
+        repository: GraphConnector,
+        db_points: list[Point],
+    ):
+        result = repository.get_unbase()
+
+        assert result == db_points[1:]
+        assert all(point.type != PointType.BASE for point in result)
+
+    def test_get_roads(
+        self,
+        repository: GraphConnector,
+        db_roads: list[Road],
+    ):
+        result = repository.get_roads()
+
+        assert result == db_roads

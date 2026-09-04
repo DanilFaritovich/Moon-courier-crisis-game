@@ -17,7 +17,7 @@ class EventRepository(ABC):
         ...
 
     @abstractmethod
-    def get_active_events(self) -> list[Event]:
+    def get_active_events(self, turn: int) -> list[Event]:
         """Return all active game events."""
         ...
 

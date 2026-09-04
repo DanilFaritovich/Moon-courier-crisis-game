@@ -12,6 +12,11 @@ class DeliveryRepository(ABC):
         ...
 
     @abstractmethod
+    def delete_delivery(self, delivery_id: int) -> None:
+        """Delete a delivery."""
+        ...
+
+    @abstractmethod
     def get_delivery(self, delivery_id: int) -> Delivery | None:
         """Return a delivery by its identifier."""
         ...

@@ -1,83 +1,175 @@
+import pytest
+from app.models.point import Point
 from app.models.rover import Rover, RoverStatus
-from app.services.connector.rover_connector_service import RoverConnectorService
+from app.services.connector.rover_connector_service import (
+    RoverConnectorService,
+)
+
+
+@pytest.fixture
+def repository(
+    db_session,
+) -> RoverConnectorService:
+    return RoverConnectorService(db_session)
+
+
+@pytest.fixture
+def db_point(
+    db_session,
+    base_point: Point,
+) -> Point:
+    db_session.add(base_point)
+    db_session.flush()
+
+    return base_point
+
+
+@pytest.fixture
+def db_points(
+    db_session,
+    points: list[Point],
+) -> list[Point]:
+    db_session.add_all(points)
+    db_session.flush()
+
+    return points
+
+
+@pytest.fixture
+def db_rover(
+    db_session,
+    rover: Rover,
+    db_point: Point,
+) -> Rover:
+    db_session.add(rover)
+    db_session.flush()
+
+    return rover
+
+
+@pytest.fixture
+def db_rovers(
+    db_session,
+    rovers: list[Rover],
+    db_points: list[Point],
+) -> list[Rover]:
+    db_session.add_all(rovers)
+    db_session.flush()
+
+    return rovers
 
 
 class TestRoverConnectorService:
-    def test_create_rover(self, db_session, point, rover):
-        """Persist a rover in the database."""
+    def test_create_rover(
+        self,
+        repository: RoverConnectorService,
+        rover: Rover,
+        db_point: Point,
+    ):
+        result = repository.create_rover(rover)
 
-        db_session.add(point)
-        db_session.commit()
+        assert result is rover
+        assert result.id == rover.id
+        assert result.name == rover.name
+        assert result.cargo_capacity == rover.cargo_capacity
+        assert result.cargo == rover.cargo
+        assert result.battery_capacity == rover.battery_capacity
+        assert result.battery == rover.battery
+        assert result.current_point_id == rover.current_point_id
+        assert result.status == RoverStatus.IDLE
 
-        repository = RoverConnectorService(db_session)
+    def test_get_rover(
+        self,
+        repository: RoverConnectorService,
+        db_rover: Rover,
+    ):
+        rover_id = db_rover.id
 
-        created = repository.create_rover(rover)
+        result = repository.get_rover(rover_id)
 
-        assert created.id is not None
-        assert created.name == "Rover A"
-        assert created.cargo_capacity == 40
-        assert created.status == RoverStatus.IDLE
+        assert result is db_rover
 
-    def test_get_rover(self, db_session, point, rover):
-        """Return a rover by its identifier."""
+    def test_get_rover_not_found(
+        self,
+        repository: RoverConnectorService,
+    ):
+        rover_id = 999
 
-        db_session.add_all([point, rover])
-        db_session.commit()
+        result = repository.get_rover(rover_id)
 
-        repository = RoverConnectorService(db_session)
+        assert result is None
 
-        result = repository.get_rover(1)
+    def test_get_rover_with_max_weight(
+        self,
+        repository: RoverConnectorService,
+        db_rovers: list[Rover],
+    ):
+        result = repository.get_rover_with_max_weight()
 
-        assert result is not None
-        assert result.id == 1
-        assert result.name == "Rover A"
+        assert result is db_rovers[1]
+        assert result.cargo_capacity == 150
 
-    def test_get_available_rovers(self, db_session, point):
-        """Return only idle rovers."""
+    def test_get_rover_with_max_weight_without_rovers(
+        self,
+        repository: RoverConnectorService,
+    ):
+        result = repository.get_rover_with_max_weight()
 
-        idle = Rover(
-            id=1,
-            name="Idle",
-            cargo_capacity=30,
-            battery=100,
-            current_point_id=1,
-            status=RoverStatus.IDLE,
-        )
+        assert result is None
 
-        delivering = Rover(
-            id=2,
-            name="Busy",
-            cargo_capacity=30,
-            battery=90,
-            current_point_id=1,
-            status=RoverStatus.DELIVERING,
-        )
+    def test_get_available_rovers(
+        self,
+        repository: RoverConnectorService,
+        db_rovers: list[Rover],
+    ):
+        delivering_status = RoverStatus.DELIVERING
+        db_rovers[1].status = delivering_status
 
-        db_session.add_all([point, idle, delivering])
-        db_session.commit()
+        result = repository.get_available_rovers()
 
-        repository = RoverConnectorService(db_session)
+        assert result == [db_rovers[0]]
 
-        rovers = repository.get_available_rovers()
+    def test_get_available_rovers_without_available_rovers(
+        self,
+        repository: RoverConnectorService,
+        db_rovers: list[Rover],
+    ):
+        status = RoverStatus.DELIVERING
 
-        assert len(rovers) == 1
-        assert rovers[0].name == "Idle"
-        assert rovers[0].status == RoverStatus.IDLE
+        for rover in db_rovers:
+            rover.status = status
 
-    def test_update_rover(self, db_session, point, rover):
-        """Persist rover updates."""
+        result = repository.get_available_rovers()
 
-        db_session.add_all([point, rover])
-        db_session.commit()
+        assert result == []
 
-        repository = RoverConnectorService(db_session)
+    def test_update_rover(
+        self,
+        repository: RoverConnectorService,
+        db_rover: Rover,
+    ):
+        name = "Rover-Updated"
+        cargo = 40
+        battery = 60
+        status = RoverStatus.DELIVERING
 
-        rover.battery = 55
-        rover.status = RoverStatus.CHARGING
+        db_rover.name = name
+        db_rover.cargo = cargo
+        db_rover.battery = battery
+        db_rover.status = status
 
-        repository.update_rover(rover)
+        result = repository.update_rover(db_rover)
 
-        db_session.refresh(rover)
+        assert result is db_rover
+        assert result.name == name
+        assert result.cargo == cargo
+        assert result.battery == battery
+        assert result.status == status
 
-        assert rover.battery == 55
-        assert rover.status == RoverStatus.CHARGING
+        persisted_rover = repository.get_rover(db_rover.id)
+
+        assert persisted_rover is db_rover
+        assert persisted_rover.name == name
+        assert persisted_rover.cargo == cargo
+        assert persisted_rover.battery == battery
+        assert persisted_rover.status == status

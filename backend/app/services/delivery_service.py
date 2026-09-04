@@ -14,15 +14,22 @@ class DeliveryService:
         self,
         order_id: int,
         rover_id: int,
+        started_turn: int,
     ) -> Delivery:
         """Create a new delivery."""
 
         delivery = Delivery(
             order_id=order_id,
             rover_id=rover_id,
+            started_turn=started_turn,
         )
 
         return self.repository.create_delivery(delivery)
+
+    def delete_delivery(self, delivery_id: int) -> None:
+        """Delete a delivery."""
+
+        self.repository.delete_delivery(delivery_id)
 
     def get_delivery(
         self,

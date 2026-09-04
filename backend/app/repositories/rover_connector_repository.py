@@ -17,11 +17,16 @@ class RoverConnectorRepository(ABC):
         ...
 
     @abstractmethod
+    def get_rover_with_max_weight(self) -> Rover | None:
+        """Return a rover with the highest weight capacity."""
+        ...
+
+    @abstractmethod
     def get_available_rovers(self) -> list[Rover]:
         """Return all idle rovers available for delivery."""
         ...
 
     @abstractmethod
-    def update_rover(self, rover: Rover) -> None:
+    def update_rover(self, rover: Rover) -> Rover:
         """Persist rover changes."""
         ...

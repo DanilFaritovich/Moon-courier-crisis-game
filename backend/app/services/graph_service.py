@@ -1,5 +1,15 @@
+from dataclasses import dataclass
+
 import networkx as nx
+from app.models.point import Point
 from app.repositories.graph_connector_repository import GraphRepository
+
+
+@dataclass
+class GraphState:
+    """Runtime state of the game map graph."""
+
+    graph: nx.Graph
 
 
 class GraphService:
@@ -7,14 +17,15 @@ class GraphService:
 
     def __init__(self, repository: GraphRepository):
         self.repository = repository
+        self.graph_state: GraphState | None = None
 
-    def build_graph(self) -> nx.Graph:
+    def build_graph(self) -> GraphState:
         """Build a NetworkX graph from map points and roads."""
 
         points = self.repository.get_points()
         roads = self.repository.get_roads()
 
-        graph = nx.Graph()
+        graph: nx.Graph = nx.Graph()
 
         for point in points:
             graph.add_node(
@@ -34,4 +45,70 @@ class GraphService:
                 speed_modifier=road.speed_modifier,
             )
 
-        return graph
+        self.graph_state = GraphState(graph=graph)
+
+        return self.graph_state
+
+    def find_path(
+        self,
+        start_point_id: int,
+        end_point_id: int,
+    ) -> list[int]:
+        """Find the shortest path between two points."""
+
+        graph = self._get_graph()
+
+        try:
+            return nx.shortest_path(
+                graph,
+                source=start_point_id,
+                target=end_point_id,
+                weight="distance",
+            )
+        except (nx.NetworkXNoPath, nx.NodeNotFound):
+            return []
+
+    def get_path_distance(
+        self,
+        path: list[int],
+    ) -> int:
+        """Calculate the total distance of a path."""
+
+        graph = self._get_graph()
+
+        try:
+            return nx.path_weight(
+                graph,
+                path,
+                weight="distance",
+            )
+        except nx.NetworkXNoPath:
+            return 0
+
+    def get_path_risk(
+        self,
+        path: list[int],
+    ) -> float:
+        """Calculate the total risk of a path."""
+
+        graph = self._get_graph()
+
+        return sum(graph[u][v]["risk"] for u, v in zip(path, path[1:], strict=False))
+
+    def get_base(self) -> Point:
+        return self.repository.get_base()
+
+    def get_distance_to_base(self, point_id: int) -> int:
+        path = self.find_path(point_id, self.get_base().id)
+        return self.get_path_distance(path)
+
+    def get_unbase(self) -> list[Point]:
+        return self.repository.get_unbase()
+
+    def _get_graph(self) -> nx.Graph:
+        """Return the current graph or raise if it has not been built."""
+
+        if self.graph_state is None:
+            raise RuntimeError("Graph has not been built.")
+
+        return self.graph_state.graph

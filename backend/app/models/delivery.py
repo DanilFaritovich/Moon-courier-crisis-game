@@ -1,4 +1,3 @@
-from datetime import datetime
 from enum import Enum
 
 from app.db.base import Base
@@ -41,12 +40,11 @@ class Delivery(Base):
         nullable=False,
     )
 
-    started_at: Mapped[datetime] = mapped_column(
-        default=datetime.utcnow,
+    started_turn: Mapped[int] = mapped_column(
         nullable=False,
     )
 
-    completed_at: Mapped[datetime | None] = mapped_column(
+    completed_turn: Mapped[int] = mapped_column(
         nullable=True,
     )
 

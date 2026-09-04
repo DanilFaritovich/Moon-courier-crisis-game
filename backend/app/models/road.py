@@ -25,7 +25,7 @@ class Road(Base):
     )
 
     # Physical length of the road in kilometers.
-    distance: Mapped[float] = mapped_column(
+    distance: Mapped[int] = mapped_column(
         nullable=False,
     )
 

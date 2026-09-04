@@ -1,8 +1,6 @@
-from datetime import datetime, timezone
 from enum import Enum
 
 from app.db.base import Base
-from sqlalchemy import DateTime
 from sqlalchemy import Enum as SqlEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -36,13 +34,10 @@ class Event(Base):
         nullable=False,
     )
 
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=datetime.now(timezone.utc),
+    start_turn: Mapped[int] = mapped_column(
         nullable=False,
     )
 
-    expires_at: Mapped[datetime] = mapped_column(
-        DateTime,
+    end_turn: Mapped[int] = mapped_column(
         nullable=False,
     )
