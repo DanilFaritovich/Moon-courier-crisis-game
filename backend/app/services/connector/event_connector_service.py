@@ -1,3 +1,5 @@
+import logging
+
 from app.models.event import Event
 from app.repositories.event_connector_repository import EventRepository
 from sqlalchemy import select
@@ -7,8 +9,9 @@ from sqlalchemy.orm import Session
 class EventConnectorRepository(EventRepository):
     """SQLAlchemy implementation of the event repository."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, logger: logging.Logger | None = None):
         self.db = db
+        self.logger = logger if logger is not None else logging.getLogger(__name__)
 
     def create_event(self, event: Event) -> Event:
         """Create and persist a game event."""

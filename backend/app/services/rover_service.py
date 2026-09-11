@@ -1,3 +1,5 @@
+import logging
+
 from app.models.rover import Rover, RoverStatus
 from app.repositories.rover_connector_repository import RoverConnectorRepository
 
@@ -5,8 +7,13 @@ from app.repositories.rover_connector_repository import RoverConnectorRepository
 class RoverService:
     """Manage rover business logic."""
 
-    def __init__(self, repository: RoverConnectorRepository):
+    def __init__(
+        self,
+        repository: RoverConnectorRepository,
+        logger: logging.Logger | None = None,
+    ):
         self.repository = repository
+        self.logger = logger if logger is not None else logging.getLogger(__name__)
 
     def create_rover(
         self,

@@ -1,3 +1,5 @@
+import logging
+
 from app.models.delivery import Delivery, DeliveryStatus
 from app.repositories.delivery_connector_repository import DeliveryRepository
 
@@ -5,10 +7,15 @@ from app.repositories.delivery_connector_repository import DeliveryRepository
 class DeliveryService:
     """Manage order deliveries."""
 
-    def __init__(self, repository: DeliveryRepository):
+    def __init__(
+        self,
+        repository: DeliveryRepository,
+        logger: logging.Logger | None = None,
+    ):
         """Initialize the delivery service."""
 
         self.repository = repository
+        self.logger = logger if logger is not None else logging.getLogger(__name__)
 
     def create_delivery(
         self,

@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 
 import networkx as nx
@@ -15,8 +16,13 @@ class GraphState:
 class GraphService:
     """Build and manipulate the game map graph."""
 
-    def __init__(self, repository: GraphRepository):
+    def __init__(
+        self,
+        repository: GraphRepository,
+        logger: logging.Logger | None = None,
+    ):
         self.repository = repository
+        self.logger = logger if logger is not None else logging.getLogger(__name__)
         self.graph_state: GraphState | None = None
 
     def build_graph(self) -> GraphState:

@@ -1,3 +1,4 @@
+import logging
 from random import choice, randint
 
 from app.models.order import Order, OrderStatus, OrderUrgency
@@ -7,9 +8,14 @@ from app.repositories.order_connector_repository import OrderRepository
 class OrderService:
     """Manage delivery orders."""
 
-    def __init__(self, repository: OrderRepository):
+    def __init__(
+        self,
+        repository: OrderRepository,
+        logger: logging.Logger | None = None,
+    ):
         """Initialize the service with a database session."""
         self.repository = repository
+        self.logger = logger if logger is not None else logging.getLogger(__name__)
 
     def create_order(
         self,

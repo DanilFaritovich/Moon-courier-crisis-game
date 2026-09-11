@@ -1,3 +1,5 @@
+import logging
+
 from app.models.order import Order, OrderStatus
 from app.repositories.order_connector_repository import OrderRepository
 from sqlalchemy import select
@@ -7,8 +9,9 @@ from sqlalchemy.orm import Session
 class OrderConnector(OrderRepository):
     """SQLAlchemy implementation of the order_connector repository."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, logger: logging.Logger | None = None):
         self.db = db
+        self.logger = logger if logger is not None else logging.getLogger(__name__)
 
     def create_order(self, order: Order) -> Order:
         """Create and persist a new delivery order."""

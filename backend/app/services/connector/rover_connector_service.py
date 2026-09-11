@@ -1,3 +1,5 @@
+import logging
+
 from app.models.rover import Rover, RoverStatus
 from app.repositories.rover_connector_repository import RoverConnectorRepository
 from sqlalchemy import select
@@ -7,8 +9,9 @@ from sqlalchemy.orm import Session
 class RoverConnectorService(RoverConnectorRepository):
     """SQLAlchemy implementation of the rover repository."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, logger: logging.Logger | None = None):
         self.db = db
+        self.logger = logger if logger is not None else logging.getLogger(__name__)
 
     def create_rover(self, rover: Rover) -> Rover:
         """Persist a new rover."""
