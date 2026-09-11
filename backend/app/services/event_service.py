@@ -1,3 +1,4 @@
+import logging
 from random import choice, randint
 
 from app.models.event import Event, EventType
@@ -7,8 +8,13 @@ from app.repositories.event_connector_repository import EventRepository
 class EventService:
     """Manage game events."""
 
-    def __init__(self, repository: EventRepository):
+    def __init__(
+        self,
+        repository: EventRepository,
+        logger: logging.Logger | None = None,
+    ):
         self.repository = repository
+        self.logger = logger if logger is not None else logging.getLogger(__name__)
 
     def create_event(
         self,

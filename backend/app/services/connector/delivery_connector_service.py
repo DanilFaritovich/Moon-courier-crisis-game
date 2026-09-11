@@ -1,3 +1,5 @@
+import logging
+
 from app.models.delivery import Delivery, DeliveryStatus
 from app.repositories.delivery_connector_repository import DeliveryRepository
 from sqlalchemy import select
@@ -7,8 +9,9 @@ from sqlalchemy.orm import Session
 class DeliveryConnectorRepository(DeliveryRepository):
     """SQLAlchemy implementation of the delivery repository."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, logger: logging.Logger | None = None):
         self.db = db
+        self.logger = logger if logger is not None else logging.getLogger(__name__)
 
     def create_delivery(self, delivery: Delivery) -> Delivery:
         """Create and persist a delivery."""

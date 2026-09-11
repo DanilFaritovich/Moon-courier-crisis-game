@@ -1,3 +1,5 @@
+import logging
+
 from app.models.point import Point, PointType
 from app.models.road import Road
 from app.repositories.graph_connector_repository import GraphRepository
@@ -8,8 +10,9 @@ from sqlalchemy.orm import Session
 class GraphConnector(GraphRepository):
     """SQLAlchemy implementation of the graph_connector repository."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, logger: logging.Logger | None = None):
         self.db = db
+        self.logger = logger if logger is not None else logging.getLogger(__name__)
 
     def get_points(self) -> list[Point]:
         """Return all graph points from the database."""

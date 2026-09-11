@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass, field
 from random import randint
 from uuid import UUID, uuid4
@@ -40,6 +41,7 @@ class GameService:
         order_service: OrderService,
         delivery_service: DeliveryService,
         event_service: EventService,
+        logger: logging.Logger | None = None,
     ):
         self.unit_of_work = unit_of_work
         self.graph_service = graph_service
@@ -47,6 +49,7 @@ class GameService:
         self.order_service = order_service
         self.delivery_service = delivery_service
         self.event_service = event_service
+        self.logger = logger if logger is not None else logging.getLogger(__name__)
         self.game_state: GameState | None = None
 
     def _get_game_state(self) -> GameState:
