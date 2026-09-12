@@ -43,6 +43,7 @@ defineEmits<{ confirm: []; close: [] }>();
           CANCEL</button
         ><button
           class="confirm-button"
+          data-testid="confirm-delivery"
           :disabled="busy"
           @click="$emit('confirm')"
         >

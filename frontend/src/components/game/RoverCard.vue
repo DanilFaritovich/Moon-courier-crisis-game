@@ -14,6 +14,7 @@ const meterWidth = (current: number, maximum: number): string =>
   <article
     class="rover-card"
     :class="{ selected }"
+    :data-testid="`rover-${rover.id}`"
     :draggable="rover.status === 'idle'"
     @click="$emit('select', rover)"
     @dragstart="rover.status === 'idle' && $emit('dragStart', rover)"
