@@ -59,11 +59,26 @@ const selectedDestinationName = computed(() => {
     ?.name;
 });
 
+function messageFromError(caught: unknown, fallback: string): string {
+  if (caught instanceof TypeError) {
+    return "Mission Control is unreachable. Check the backend and retry.";
+  }
+  return caught instanceof Error ? caught.message : fallback;
+}
+
 async function loadGame(): Promise<void> {
-  const [game, map] = await Promise.all([gameApi.state(), gameApi.map()]);
-  state.value = game;
-  points.value = map.points;
-  roads.value = map.roads;
+  busy.value = true;
+  error.value = "";
+  try {
+    const [game, map] = await Promise.all([gameApi.state(), gameApi.map()]);
+    state.value = game;
+    points.value = map.points;
+    roads.value = map.roads;
+  } catch (caught) {
+    error.value = messageFromError(caught, "Could not load the game.");
+  } finally {
+    busy.value = false;
+  }
 }
 
 async function perform(action: () => Promise<GameState>): Promise<void> {
@@ -77,7 +92,7 @@ async function perform(action: () => Promise<GameState>): Promise<void> {
       );
     }
   } catch (caught) {
-    error.value = caught instanceof Error ? caught.message : "Action failed.";
+    error.value = messageFromError(caught, "Action failed.");
   } finally {
     busy.value = false;
   }
@@ -91,8 +106,8 @@ async function startDrag(rover: Rover): Promise<void> {
     previews.value = await gameApi.availableOrders(rover.id);
     validOrderIds.value = previews.value.map((order) => order.id);
   } catch (caught) {
-    error.value =
-      caught instanceof Error ? caught.message : "Could not load orders.";
+    error.value = messageFromError(caught, "Could not load contracts.");
+    endDrag();
   }
 }
 function endDrag(): void {
@@ -144,14 +159,7 @@ async function confirmDelivery(): Promise<void> {
 async function cancelDelivery(deliveryId: number): Promise<void> {
   await perform(() => gameApi.cancelDelivery(deliveryId));
 }
-onMounted(async () => {
-  try {
-    await loadGame();
-  } catch (caught) {
-    error.value =
-      caught instanceof Error ? caught.message : "Backend unavailable.";
-  }
-});
+onMounted(loadGame);
 </script>
 
 <template>
@@ -163,8 +171,15 @@ onMounted(async () => {
       :busy="busy"
       @next-turn="perform(gameApi.nextTurn)"
     />
-    <p v-if="error" class="notification">{{ error }}</p>
-    <div v-if="!state" class="center-state">CONNECTING TO MISSION CONTROL…</div>
+    <p v-if="error" class="notification" role="alert">{{ error }}</p>
+    <div v-if="!state" class="center-state">
+      <span>{{
+        error ? "MISSION CONTROL OFFLINE" : "CONNECTING TO MISSION CONTROL…"
+      }}</span>
+      <button v-if="error" class="quiet-button" @click="loadGame">
+        RETRY CONNECTION
+      </button>
+    </div>
     <template v-else>
       <div class="mission-grid">
         <GameMap
