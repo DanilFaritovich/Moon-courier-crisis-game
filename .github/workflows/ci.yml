@@ -86,6 +86,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install E2E dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
       - name: Build container images
         run: docker compose build
 
@@ -108,9 +116,23 @@ jobs:
       - name: Smoke test proxied API
         run: curl --fail --retry 10 --retry-connrefused http://127.0.0.1:8080/health
 
+      - name: Run end-to-end tests
+        working-directory: frontend
+        env:
+          E2E_BASE_URL: http://127.0.0.1:8080
+        run: npm run test:e2e
+
       - name: Print container logs on failure
         if: failure()
         run: docker compose logs
+
+      - name: Upload E2E artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts
+          path: frontend/test-results
+          if-no-files-found: ignore
 
       - name: Stop application
         if: always()

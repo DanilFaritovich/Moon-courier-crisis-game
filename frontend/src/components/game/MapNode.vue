@@ -21,6 +21,7 @@ function dropOrder(event: DragEvent): void {
 <template>
   <g
     class="map-node"
+    :data-testid="`map-point-${point.id}`"
     :class="[
       point.type,
       {

@@ -18,7 +18,12 @@ defineEmits<{ nextTurn: [] }>();
         >✦ <b>{{ score }}</b></span
       >
     </div>
-    <button class="next-turn" :disabled="busy" @click="$emit('nextTurn')">
+    <button
+      class="next-turn"
+      data-testid="next-turn"
+      :disabled="busy"
+      @click="$emit('nextTurn')"
+    >
       {{ busy ? "PROCESSING…" : "NEXT TURN  →" }}
     </button>
   </header>

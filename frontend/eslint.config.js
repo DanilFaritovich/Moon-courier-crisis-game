@@ -20,4 +20,8 @@ export default [
     files: ["**/*.{ts,vue}"],
     languageOptions: { globals: globals.browser },
   },
+  {
+    files: ["e2e/**/*.ts", "playwright.config.ts"],
+    languageOptions: { globals: globals.node },
+  },
 ];
