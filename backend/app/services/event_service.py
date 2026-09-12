@@ -34,7 +34,15 @@ class EventService:
             end_turn=turn + duration - 1,
         )
 
-        return self.repository.create_event(event)
+        event = self.repository.create_event(event)
+        self.logger.info(
+            "Created event id=%s type=%s for turns %s-%s",
+            event.id,
+            event_type.value,
+            event.start_turn,
+            event.end_turn,
+        )
+        return event
 
     def create_random_event(
         self,
@@ -69,6 +77,13 @@ class EventService:
         if duration is None:
             duration = randint(1, 3)
 
+        self.logger.debug(
+            "Generated random event type=%s for turn=%s with duration=%s",
+            event_type.value,
+            turn,
+            duration,
+        )
+
         return self.create_event(
             event_type=event_type,
             title=title,
@@ -80,9 +95,11 @@ class EventService:
     def get_event(self, event_id: int) -> Event | None:
         """Return an event by its identifier."""
 
+        self.logger.debug("Fetching event id=%s", event_id)
         return self.repository.get_event(event_id)
 
     def get_active_events(self, turn: int) -> list[Event]:
         """Return currently active game events."""
 
+        self.logger.debug("Fetching active events for turn=%s", turn)
         return self.repository.get_active_events(turn)

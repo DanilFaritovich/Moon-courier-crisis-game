@@ -34,21 +34,26 @@ class RoverService:
             status=RoverStatus.IDLE,
         )
 
-        return self.repository.create_rover(rover)
+        rover = self.repository.create_rover(rover)
+        self.logger.info("Created rover id=%s name=%s", rover.id, rover.name)
+        return rover
 
     def get_rover(self, rover_id: int) -> Rover | None:
         """Return a rover by its identifier."""
 
+        self.logger.debug("Fetching rover id=%s", rover_id)
         return self.repository.get_rover(rover_id)
 
     def get_rover_with_max_weight(self) -> Rover | None:
         """Return a rover with the highest weight."""
 
+        self.logger.debug("Fetching rover with maximum cargo capacity")
         return self.repository.get_rover_with_max_weight()
 
     def get_available_rovers(self) -> list[Rover]:
         """Return rovers that are ready for delivery."""
 
+        self.logger.debug("Fetching available rovers")
         return self.repository.get_available_rovers()
 
     def update_battery(self, rover: Rover, battery: int) -> None:
@@ -56,12 +61,14 @@ class RoverService:
 
         rover.battery = max(0, min(100, battery))
         self.repository.update_rover(rover)
+        self.logger.info("Updated rover id=%s battery=%s", rover.id, rover.battery)
 
     def set_status(self, rover: Rover, status: RoverStatus) -> None:
         """Change rover status."""
 
         rover.status = status
         self.repository.update_rover(rover)
+        self.logger.info("Set rover id=%s status=%s", rover.id, status.value)
 
     def get_battery_after_move(self, rover: Rover, distance: int, weight: int) -> int:
         """Calculate battery level after a move."""
@@ -86,6 +93,14 @@ class RoverService:
         rover.battery = battery
 
         self.repository.update_rover(rover)
+        self.logger.info(
+            "Moved rover id=%s to point_id=%s distance=%s battery=%s cargo=%s",
+            rover.id,
+            point_id,
+            distance,
+            rover.battery,
+            rover.cargo,
+        )
 
     def get_battery_after_move_back(
         self,
@@ -115,3 +130,11 @@ class RoverService:
         rover.battery = battery
 
         self.repository.update_rover(rover)
+        self.logger.info(
+            "Returned rover id=%s to point_id=%s distance=%s battery=%s cargo=%s",
+            rover.id,
+            point_id,
+            distance,
+            rover.battery,
+            rover.cargo,
+        )

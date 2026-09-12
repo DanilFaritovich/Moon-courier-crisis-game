@@ -18,6 +18,7 @@ class DeliveryConnectorRepository(DeliveryRepository):
 
         self.db.add(delivery)
         self.db.flush()
+        self.logger.debug("Persisted delivery id=%s", delivery.id)
 
         return delivery
 
@@ -27,10 +28,12 @@ class DeliveryConnectorRepository(DeliveryRepository):
         delivery = self.db.get(Delivery, delivery_id)
 
         if delivery is None:
+            self.logger.debug("Delivery id=%s was already absent", delivery_id)
             return
 
         self.db.delete(delivery)
         self.db.flush()
+        self.logger.debug("Deleted persisted delivery id=%s", delivery_id)
 
     def get_delivery(
         self,
@@ -38,6 +41,7 @@ class DeliveryConnectorRepository(DeliveryRepository):
     ) -> Delivery | None:
         """Return a delivery by its identifier."""
 
+        self.logger.debug("Loading delivery id=%s", delivery_id)
         return self.db.get(Delivery, delivery_id)
 
     def get_deliveries_by_status(
@@ -46,6 +50,7 @@ class DeliveryConnectorRepository(DeliveryRepository):
     ) -> list[Delivery]:
         """Return deliveries with the specified status."""
 
+        self.logger.debug("Loading deliveries with status=%s", status.value)
         return list(
             self.db.scalars(
                 select(Delivery).where(
@@ -58,5 +63,6 @@ class DeliveryConnectorRepository(DeliveryRepository):
         """Update and persist a delivery."""
 
         self.db.flush()
+        self.logger.debug("Updated persisted delivery id=%s", delivery.id)
 
         return delivery
