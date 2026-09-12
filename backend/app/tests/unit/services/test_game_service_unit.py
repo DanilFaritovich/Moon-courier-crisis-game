@@ -198,6 +198,7 @@ class TestGameService:
         distance = 15
 
         service.game_state = game_state
+        game_state.active_rovers = [rover]
 
         rover_service.get_rover.return_value = rover
         order_service.get_order.return_value = order
@@ -267,6 +268,29 @@ class TestGameService:
             )
 
         rover_service.get_rover.assert_called_once_with(rover_id)
+        order_service.get_order.assert_not_called()
+        unit_of_work.commit.assert_not_called()
+        unit_of_work.rollback.assert_not_called()
+
+    def test_create_delivery_rejects_busy_rover(
+        self,
+        service: GameService,
+        rover_service: Mock,
+        order_service: Mock,
+        unit_of_work: Mock,
+        game_state: GameState,
+        rover: Rover,
+    ) -> None:
+        rover.status = RoverStatus.DELIVERING
+        service.game_state = game_state
+        rover_service.get_rover.return_value = rover
+
+        with pytest.raises(
+            RuntimeError,
+            match=f"Rover {rover.id} is not available.",
+        ):
+            service.create_delivery(rover_id=rover.id, order_id=1)
+
         order_service.get_order.assert_not_called()
         unit_of_work.commit.assert_not_called()
         unit_of_work.rollback.assert_not_called()
@@ -350,6 +374,7 @@ class TestGameService:
         distance = 15
 
         service.game_state = game_state
+        game_state.active_rovers = [rover]
 
         delivery_service.get_delivery.return_value = delivery
         rover_service.get_rover.return_value = rover
@@ -693,10 +718,12 @@ class TestGameService:
         available_orders = [Mock()]
         available_rovers = [rover]
         add_orders = 2
-        max_weight = rover.cargo_capacity
 
         mock_randint.return_value = add_orders
         graph_service.get_unbase.return_value = points
+        graph_service.get_base.return_value = Mock(id=10)
+        graph_service.find_path.return_value = [10, 20]
+        graph_service.get_path_distance.return_value = 10
         rover_service.get_rover_with_max_weight.return_value = rover
         order_service.get_available_orders.return_value = available_orders
         rover_service.get_available_rovers.return_value = available_rovers
@@ -708,14 +735,13 @@ class TestGameService:
         order_service.get_available_orders.assert_called_once_with()
         rover_service.get_available_rovers.assert_called_once_with()
 
-        mock_randint.assert_called_once_with(1, 1)
+        mock_randint.assert_any_call(1, 1)
 
-        assert order_service.create_random_order.call_count == add_orders
-
-        order_service.create_random_order.assert_any_call(
-            [20, 30, 40],
-            max_weight,
-        )
+        assert order_service.create_order.call_count == add_orders
+        for call in order_service.create_order.call_args_list:
+            assert call.kwargs["destination_point_id"] in {20, 30, 40}
+            assert call.kwargs["weight"] == add_orders
+            assert call.kwargs["reward"] == add_orders
 
     def test_generate_orders_does_not_create_when_enough_orders(
         self,

@@ -4,10 +4,10 @@ from typing import Annotated, TypeVar
 
 from app.api.dependencies import get_game_service
 from app.api.schemas.game import (
+    AvailableOrderResponse,
     CreateDeliveryRequest,
     GameStateResponse,
     OrderResponse,
-    AvailableOrderResponse,
 )
 from app.schemas.map import MapData
 from app.services.game_service import GameService
@@ -86,7 +86,10 @@ def cancel_delivery(
     return GameStateResponse.from_game_state(game_state)
 
 
-@router.get("/rovers/{rover_id}/available-orders", response_model=list[AvailableOrderResponse])
+@router.get(
+    "/rovers/{rover_id}/available-orders",
+    response_model=list[AvailableOrderResponse],
+)
 def get_available_orders_by_rover(
     rover_id: int,
     game_service: Annotated[GameService, Depends(get_game_service)],
@@ -96,7 +99,17 @@ def get_available_orders_by_rover(
     )
     rover = game_service.rover_service.get_rover(rover_id)
     assert rover is not None
-    return [AvailableOrderResponse.model_validate({**OrderResponse.model_validate(order).model_dump(), "distance": distance, "battery_before": rover.battery, "battery_after": battery_after}) for order, distance, battery_after in previews]
+    return [
+        AvailableOrderResponse.model_validate(
+            {
+                **OrderResponse.model_validate(order).model_dump(),
+                "distance": distance,
+                "battery_before": rover.battery,
+                "battery_after": battery_after,
+            }
+        )
+        for order, distance, battery_after in previews
+    ]
 
 
 @router.post("/next-turn", response_model=GameStateResponse)

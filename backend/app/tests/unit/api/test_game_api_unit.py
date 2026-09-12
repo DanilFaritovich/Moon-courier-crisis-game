@@ -190,14 +190,27 @@ class TestGameApi:
         game_service: Mock,
         order: Order,
     ) -> None:
-        game_service.get_available_orders_by_rover.return_value = [order]
+        game_service.get_available_order_previews.return_value = [(order, 12, 65)]
+        game_service.rover_service = Mock()
+        game_service.rover_service.get_rover.return_value = Rover(
+            id=1,
+            name="Rover-1",
+            cargo_capacity=100,
+            cargo=20,
+            battery_capacity=100,
+            battery=80,
+            current_point_id=10,
+        )
 
         response = await api_client("GET", "/game/rovers/1/available-orders")
 
         assert response.status_code == 200
         assert response.json()[0]["id"] == order.id
         assert response.json()[0]["status"] == "available"
-        game_service.get_available_orders_by_rover.assert_called_once_with(1)
+        assert response.json()[0]["distance"] == 12
+        assert response.json()[0]["battery_before"] == 80
+        assert response.json()[0]["battery_after"] == 65
+        game_service.get_available_order_previews.assert_called_once_with(1)
 
     async def test_next_turn_calls_game_service(
         self,

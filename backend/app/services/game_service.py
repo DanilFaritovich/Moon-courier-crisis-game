@@ -5,11 +5,10 @@ from uuid import UUID, uuid4
 
 from app.models.delivery import Delivery
 from app.models.event import Event
-from app.models.order import Order, OrderUrgency
-from app.models.order import OrderStatus
+from app.models.order import Order, OrderStatus, OrderUrgency
 from app.models.rover import Rover, RoverStatus
-from app.schemas.map import MapData, MapPointData, MapRoadData
 from app.repositories.unit_of_work import UnitOfWork
+from app.schemas.map import MapData, MapPointData, MapRoadData
 from app.services.delivery_service import DeliveryService
 from app.services.event_service import EventService
 from app.services.graph_service import GraphService, GraphState
@@ -105,8 +104,6 @@ class GameService:
                 rover_id,
             )
             raise RuntimeError(f"Rover {rover_id} not found.")
-        if rover.status is not RoverStatus.IDLE:
-            return []
         if rover.status is not RoverStatus.IDLE:
             raise RuntimeError(f"Rover {rover_id} is not available.")
 
@@ -292,15 +289,27 @@ class GameService:
         )
         return available_orders
 
-    def get_available_order_previews(self, rover_id: int) -> list[tuple[Order, int, int]]:
+    def get_available_order_previews(
+        self,
+        rover_id: int,
+    ) -> list[tuple[Order, int, int]]:
+        """Return feasible orders with route distance and battery forecast."""
+
         rover = self.rover_service.get_rover(rover_id)
         if rover is None:
             raise RuntimeError(f"Rover {rover_id} not found.")
         previews = []
         for order in self.get_available_orders_by_rover(rover_id):
-            path = self.graph_service.find_path(rover.current_point_id, order.destination_point_id)
+            path = self.graph_service.find_path(
+                rover.current_point_id,
+                order.destination_point_id,
+            )
             distance = self.graph_service.get_path_distance(path)
-            battery_after = self.rover_service.get_battery_after_move(rover, distance, order.weight)
+            battery_after = self.rover_service.get_battery_after_move(
+                rover,
+                distance,
+                order.weight,
+            )
             previews.append((order, distance, battery_after))
         return previews
 
