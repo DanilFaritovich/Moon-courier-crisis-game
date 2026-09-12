@@ -32,6 +32,12 @@ class OrderResponse(BaseModel):
     status: OrderStatus
 
 
+class AvailableOrderResponse(OrderResponse):
+    distance: int
+    battery_before: int
+    battery_after: int
+
+
 class DeliveryResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

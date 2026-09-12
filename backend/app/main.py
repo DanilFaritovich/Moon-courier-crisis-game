@@ -1,12 +1,16 @@
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 from time import perf_counter
 
 from app.api.dependencies import build_game_service
 from app.api.routers.game import router as game_router
 from app.db.database import SessionLocal, create_tables
 from app.logging import configure_logging
+from app.seeders.map_seeder import MapSeeder
+from app.seeders.order_seeder import OrderSeeder
+from app.seeders.rover_seeder import RoverSeeder
 from fastapi import FastAPI, Request
 from starlette.responses import Response
 
@@ -21,8 +25,15 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     logger.info("Starting Moon Courier Crisis API")
     create_tables()
     db = SessionLocal()
-    app.state.game_service = build_game_service(db)
-    logger.info("Database tables and game service are ready")
+    map_path = Path(__file__).resolve().parents[2] / "data" / "map.json"
+    MapSeeder(db, map_path).seed()
+    RoverSeeder(db, base_point_id=1).seed()
+    OrderSeeder(db).seed()
+
+    game_service = build_game_service(db)
+    app.state.game_service = game_service
+    game_service.initialize_game()
+    logger.info("Database tables, starter mission, and game service are ready")
 
     try:
         yield

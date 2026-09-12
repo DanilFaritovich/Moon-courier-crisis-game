@@ -4,10 +4,12 @@ from typing import Annotated, TypeVar
 
 from app.api.dependencies import get_game_service
 from app.api.schemas.game import (
+    AvailableOrderResponse,
     CreateDeliveryRequest,
     GameStateResponse,
     OrderResponse,
 )
+from app.schemas.map import MapData
 from app.services.game_service import GameService
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -52,6 +54,13 @@ def get_game_state(
     return GameStateResponse.from_game_state(game_state)
 
 
+@router.get("/map", response_model=MapData)
+def get_map(
+    game_service: Annotated[GameService, Depends(get_game_service)],
+) -> MapData:
+    return _execute_game_action(game_service.get_map)
+
+
 @router.post("/deliveries", response_model=GameStateResponse)
 def create_delivery(
     payload: CreateDeliveryRequest,
@@ -77,15 +86,30 @@ def cancel_delivery(
     return GameStateResponse.from_game_state(game_state)
 
 
-@router.get("/rovers/{rover_id}/available-orders", response_model=list[OrderResponse])
+@router.get(
+    "/rovers/{rover_id}/available-orders",
+    response_model=list[AvailableOrderResponse],
+)
 def get_available_orders_by_rover(
     rover_id: int,
     game_service: Annotated[GameService, Depends(get_game_service)],
-) -> list[OrderResponse]:
-    orders = _execute_game_action(
-        lambda: game_service.get_available_orders_by_rover(rover_id),
+) -> list[AvailableOrderResponse]:
+    previews = _execute_game_action(
+        lambda: game_service.get_available_order_previews(rover_id),
     )
-    return [OrderResponse.model_validate(order) for order in orders]
+    rover = game_service.rover_service.get_rover(rover_id)
+    assert rover is not None
+    return [
+        AvailableOrderResponse.model_validate(
+            {
+                **OrderResponse.model_validate(order).model_dump(),
+                "distance": distance,
+                "battery_before": rover.battery,
+                "battery_after": battery_after,
+            }
+        )
+        for order, distance, battery_after in previews
+    ]
 
 
 @router.post("/next-turn", response_model=GameStateResponse)
