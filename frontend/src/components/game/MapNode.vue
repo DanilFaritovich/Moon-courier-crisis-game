@@ -8,14 +8,14 @@ const props = defineProps<{
   dragging: boolean;
   selected: boolean;
 }>();
-const emit = defineEmits<{ select: [MapPoint]; dropOrder: [Order] }>();
+const emit = defineEmits<{ select: [MapPoint]; dropOrders: [Order[]] }>();
 function allowDrop(event: DragEvent): void {
   if (props.valid) event.preventDefault();
 }
 function dropOrder(event: DragEvent): void {
   event.preventDefault();
-  const order = props.orders.find((item) => item.status === "available");
-  if (order && props.valid) emit("dropOrder", order);
+  const orders = props.orders.filter((item) => item.status === "available");
+  if (orders.length && props.valid) emit("dropOrders", orders);
 }
 </script>
 <template>
@@ -45,7 +45,18 @@ function dropOrder(event: DragEvent): void {
     <text class="node-name" :x="point.x" :y="point.y + 43">{{
       point.name
     }}</text
-    ><text v-if="orders.length" class="order-tag" :x="point.x" :y="point.y - 38"
+    ><text
+      v-if="orders.length === 1"
+      class="order-tag"
+      :x="point.x"
+      :y="point.y - 38"
+      >CONTRACT #{{ orders[0].id }} · ¢{{ orders[0].reward }} ·
+      {{ orders[0].weight }} kg</text
+    ><text
+      v-else-if="orders.length"
+      class="order-tag"
+      :x="point.x"
+      :y="point.y - 38"
       >CONTRACTS ×{{ orders.length }}</text
     ><text v-if="roverCount" class="rover-tag" :x="point.x" :y="point.y + 5"
       >{{ roverCount }}R</text

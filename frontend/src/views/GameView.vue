@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from "vue";
 import { gameApi } from "../api/game";
 import AssignDeliveryDialog from "../components/game/AssignDeliveryDialog.vue";
+import ContractSelectDialog from "../components/game/ContractSelectDialog.vue";
 import GameInfoPanel from "../components/game/GameInfoPanel.vue";
 import GameMap from "../components/game/GameMap.vue";
 import RoverDock from "../components/game/RoverDock.vue";
@@ -24,6 +25,8 @@ const draggingRover = ref<Rover>();
 const validOrderIds = ref<number[]>([]);
 const previews = ref<AvailableOrder[]>([]);
 const assignment = ref<{ rover: Rover; order: Order }>();
+const contractChoices = ref<Order[]>();
+const contractChoiceRover = ref<Rover>();
 const busy = ref(false);
 const error = ref("");
 const rovers = computed(() => state.value?.active_rovers ?? []);
@@ -106,6 +109,27 @@ function selectOrder(order: Order): void {
     endDrag();
   }
 }
+function chooseOrders(orders: Order[]): void {
+  const available = orders.filter((order) =>
+    validOrderIds.value.includes(order.id),
+  );
+  if (!available.length || !draggingRover.value) return;
+  if (available.length === 1) {
+    assignment.value = { rover: draggingRover.value, order: available[0] };
+    endDrag();
+    return;
+  }
+  contractChoiceRover.value = draggingRover.value;
+  contractChoices.value = available;
+  endDrag();
+}
+function selectContract(order: Order): void {
+  if (contractChoiceRover.value) {
+    assignment.value = { rover: contractChoiceRover.value, order };
+  }
+  contractChoices.value = undefined;
+  contractChoiceRover.value = undefined;
+}
 async function confirmDelivery(): Promise<void> {
   if (assignment.value)
     await perform(async () => {
@@ -117,11 +141,8 @@ async function confirmDelivery(): Promise<void> {
       return result;
     });
 }
-async function cancelSelectedDelivery(): Promise<void> {
-  const delivery = state.value?.active_deliveries.find(
-    (item) => item.rover_id === selectedRover.value?.id,
-  );
-  if (delivery) await perform(() => gameApi.cancelDelivery(delivery.id));
+async function cancelDelivery(deliveryId: number): Promise<void> {
+  await perform(() => gameApi.cancelDelivery(deliveryId));
 }
 onMounted(async () => {
   try {
@@ -154,16 +175,17 @@ onMounted(async () => {
           :valid-order-ids="validOrderIds"
           :dragging="Boolean(draggingRover)"
           @select-point="selectPoint"
-          @choose-order="selectOrder"
+          @choose-orders="chooseOrders"
         />
         <GameInfoPanel
           :rover="selectedRover"
           :point="selectedRover ? undefined : selectedPoint"
           :orders="selectedPointOrders"
+          :deliveries="state.active_deliveries"
           :delivery="selectedDelivery"
           :location-name="selectedLocationName"
           :destination-name="selectedDestinationName"
-          @cancel="cancelSelectedDelivery"
+          @cancel="cancelDelivery"
           @choose-order="selectOrder"
         />
       </div>
@@ -193,6 +215,16 @@ onMounted(async () => {
       :busy="busy"
       @confirm="confirmDelivery"
       @close="assignment = undefined"
+    />
+    <ContractSelectDialog
+      v-if="contractChoices && contractChoiceRover"
+      :rover="contractChoiceRover"
+      :orders="contractChoices"
+      @select="selectContract"
+      @close="
+        contractChoices = undefined;
+        contractChoiceRover = undefined;
+      "
     />
   </main>
 </template>

@@ -13,7 +13,7 @@ const props = defineProps<{
   dragging: boolean;
   selectedPointId?: number;
 }>();
-defineEmits<{ selectPoint: [MapPoint]; chooseOrder: [Order] }>();
+defineEmits<{ selectPoint: [MapPoint]; chooseOrders: [Order[]] }>();
 const svg = ref<SVGSVGElement>();
 const view = ref({ x: 0, y: 0, width: 900, height: 560 });
 const pan = ref<{ x: number; y: number; viewX: number; viewY: number }>();
@@ -135,7 +135,7 @@ function movePan(event: PointerEvent) {
         :dragging="dragging"
         :selected="selectedPointId === mapPoint.id"
         @select="$emit('selectPoint', $event)"
-        @drop-order="$emit('chooseOrder', $event)"
+        @drop-orders="$emit('chooseOrders', $event)"
       />
     </svg>
   </section>

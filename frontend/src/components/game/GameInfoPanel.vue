@@ -1,15 +1,19 @@
 <script setup lang="ts">
 import type { Delivery, MapPoint, Order, Rover } from "../../types/game";
 
-defineProps<{
+const props = defineProps<{
   point?: MapPoint;
   rover?: Rover;
   orders?: Order[];
+  deliveries?: Delivery[];
   delivery?: Delivery;
   locationName?: string;
   destinationName?: string;
 }>();
 defineEmits<{ cancel: [number]; chooseOrder: [Order] }>();
+function deliveryForOrder(orderId: number): Delivery | undefined {
+  return props.deliveries?.find((delivery) => delivery.order_id === orderId);
+}
 </script>
 
 <template>
@@ -56,15 +60,16 @@ defineEmits<{ cancel: [number]; chooseOrder: [Order] }>();
         {{ point.type === "base" ? "LUNAR BASE" : `${point.type} POINT` }}
       </p>
       <dl>
-        <div v-for="order in orders" :key="order.id">
+        <div v-for="order in orders" :key="order.id" class="point-contract">
           <dt>CONTRACT #{{ order.id }}</dt>
-          <dd>
+          <dd class="contract-details">
+            ¢{{ order.reward }} · {{ order.weight }} kg · {{ order.status }}
             <button
-              class="contract-choice"
-              :disabled="order.status !== 'available'"
-              @click="$emit('chooseOrder', order)"
+              v-if="deliveryForOrder(order.id)"
+              class="quiet-button"
+              @click="$emit('cancel', deliveryForOrder(order.id)!.id)"
             >
-              ¢{{ order.reward }} · {{ order.weight }} kg · {{ order.status }}
+              CANCEL DELIVERY
             </button>
           </dd>
         </div>
