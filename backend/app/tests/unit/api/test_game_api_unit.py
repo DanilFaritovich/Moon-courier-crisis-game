@@ -79,7 +79,6 @@ class TestGameApi:
         assert response.status_code == 200
         assert "Request completed method=GET path=/health status=200" in caplog.text
 
-
     async def test_initialize_game_returns_serialized_state(
         self,
         api_client,
@@ -123,7 +122,6 @@ class TestGameApi:
         }
         game_service.initialize_game.assert_called_once_with()
 
-
     async def test_get_game_state_before_initialization_returns_conflict(
         self,
         api_client,
@@ -139,7 +137,6 @@ class TestGameApi:
         assert response.status_code == 409
         assert response.json() == {"detail": "Game has not been initialized."}
         assert "Game action rejected status=409" in caplog.text
-
 
     async def test_create_delivery_calls_game_service(
         self,
@@ -158,7 +155,6 @@ class TestGameApi:
         assert response.status_code == 200
         game_service.create_delivery.assert_called_once_with(rover_id=1, order_id=2)
 
-
     async def test_create_delivery_with_missing_rover_returns_not_found(
         self,
         api_client,
@@ -175,7 +171,6 @@ class TestGameApi:
         assert response.status_code == 404
         assert response.json() == {"detail": "Rover 99 not found."}
 
-
     async def test_cancel_delivery_calls_game_service(
         self,
         api_client,
@@ -188,7 +183,6 @@ class TestGameApi:
 
         assert response.status_code == 200
         game_service.cancel_delivery.assert_called_once_with(3)
-
 
     async def test_get_available_orders_by_rover_returns_serialized_orders(
         self,
@@ -204,7 +198,6 @@ class TestGameApi:
         assert response.json()[0]["id"] == order.id
         assert response.json()[0]["status"] == "available"
         game_service.get_available_orders_by_rover.assert_called_once_with(1)
-
 
     async def test_next_turn_calls_game_service(
         self,
