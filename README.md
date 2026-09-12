@@ -1,6 +1,13 @@
 # Moon Courier Crisis Game
 
 [![CI](https://github.com/DanilFaritovich/Moon-courier-crisis-game/actions/workflows/ci.yml/badge.svg)](https://github.com/DanilFaritovich/Moon-courier-crisis-game/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/Python-3.14-blue?logo=python)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi)](https://fastapi.tiangolo.com/)
+[![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-ORM-red)](https://www.sqlalchemy.org/)
+[![Vue](https://img.shields.io/badge/Vue-3-42b883?logo=vuedotjs)](https://vuejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Frontend-3178c6?logo=typescript)](https://www.typescriptlang.org/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ed?logo=docker)](https://www.docker.com/)
+[![Playwright](https://img.shields.io/badge/Playwright-E2E-2eAD33?logo=playwright)](https://playwright.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **Moon Courier Crisis** is a full-stack turn-based logistics game where the player manages lunar rovers, delivery contracts, battery capacity, cargo constraints, and mission progression from a mission-control interface.
