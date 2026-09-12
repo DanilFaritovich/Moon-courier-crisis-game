@@ -60,6 +60,41 @@ describe("GameView", () => {
     expect(wrapper.text()).toContain("2");
   });
 
+  it("shows a retry action when Mission Control cannot be reached", async () => {
+    gameApi.state.mockRejectedValueOnce(new TypeError("Failed to fetch"));
+    const wrapper = mount(GameView, {
+      global: {
+        stubs: { GameMap: true, GameInfoPanel: true, RoverDock: true },
+      },
+    });
+    await flushPromises();
+
+    expect(wrapper.get('[role="alert"]').text()).toContain(
+      "Mission Control is unreachable",
+    );
+    await wrapper.get(".center-state .quiet-button").trigger("click");
+    await flushPromises();
+    expect(gameApi.state).toHaveBeenCalledTimes(2);
+    expect(wrapper.text()).toContain("1");
+  });
+
+  it("shows an action error and re-enables Next Turn", async () => {
+    gameApi.nextTurn.mockRejectedValue(new Error("Rover 1 is not available."));
+    const wrapper = mount(GameView, {
+      global: {
+        stubs: { GameMap: true, GameInfoPanel: true, RoverDock: true },
+      },
+    });
+    await flushPromises();
+
+    await wrapper.findComponent({ name: "TopBar" }).vm.$emit("nextTurn");
+    await flushPromises();
+    expect(wrapper.get('[role="alert"]').text()).toBe(
+      "Rover 1 is not available.",
+    );
+    expect(wrapper.get(".next-turn").attributes("disabled")).toBeUndefined();
+  });
+
   it("cancels a delivery emitted by the rover dock", async () => {
     const withDelivery = {
       ...state,
