@@ -81,6 +81,21 @@ transitions remain on the backend rather than being duplicated in the browser.
 
 Open two terminals in the repository root.
 
+### Docker (recommended for a quick demo)
+
+With Docker Desktop or Docker Engine running:
+
+```bash
+docker compose up --build
+```
+
+Open <http://127.0.0.1:8080>. Nginx serves the Vue application and proxies API
+requests to FastAPI inside the Compose network. Stop the application with
+`Ctrl+C`; add `--detach` to run it in the background.
+
+The sections below describe running the frontend and backend separately for
+development.
+
 ### 1. Start the backend
 
 ```bash
