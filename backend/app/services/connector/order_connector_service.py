@@ -1,0 +1,43 @@
+import logging
+
+from app.models.order import Order, OrderStatus
+from app.repositories.order_connector_repository import OrderRepository
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+
+class OrderConnector(OrderRepository):
+    """SQLAlchemy implementation of the order_connector repository."""
+
+    def __init__(self, db: Session, logger: logging.Logger | None = None):
+        self.db = db
+        self.logger = logger if logger is not None else logging.getLogger(__name__)
+
+    def create_order(self, order: Order) -> Order:
+        """Create and persist a new delivery order."""
+
+        self.db.add(order)
+        self.db.flush()
+        self.logger.debug("Persisted order id=%s", order.id)
+
+        return order
+
+    def get_order(self, order_id: int) -> Order | None:
+        self.logger.debug("Loading order id=%s", order_id)
+        return self.db.get(Order, order_id)
+
+    def get_available_orders(self) -> list[Order]:
+        self.logger.debug("Loading available orders")
+        return list(
+            self.db.scalars(
+                select(Order).where(Order.status == OrderStatus.AVAILABLE)
+            ).all()
+        )
+
+    def update_order(self, order: Order) -> Order:
+        """Update an existing delivery order."""
+
+        self.db.flush()
+        self.logger.debug("Updated persisted order id=%s", order.id)
+
+        return order

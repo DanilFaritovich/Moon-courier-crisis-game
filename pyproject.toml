@@ -1,0 +1,16 @@
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.mypy]
+explicit_package_bases = true
+mypy_path = "backend"
+exclude = [
+    "^backend/app/tests/",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["backend/app/tests"]
+pythonpath = ["backend"]
