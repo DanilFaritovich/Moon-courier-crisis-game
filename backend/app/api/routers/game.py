@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Callable
 from typing import Annotated, TypeVar
 
@@ -13,6 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 router = APIRouter(prefix="/game", tags=["game"])
 
 Result = TypeVar("Result")
+logger = logging.getLogger(__name__)
 
 
 def _execute_game_action(action: Callable[[], Result]) -> Result:
@@ -25,6 +27,11 @@ def _execute_game_action(action: Callable[[], Result]) -> Result:
             status.HTTP_404_NOT_FOUND
             if "not found" in str(error)
             else status.HTTP_409_CONFLICT
+        )
+        logger.warning(
+            "Game action rejected status=%s detail=%s",
+            status_code,
+            error,
         )
         raise HTTPException(status_code=status_code, detail=str(error)) from error
 

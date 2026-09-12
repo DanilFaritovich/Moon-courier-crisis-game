@@ -68,6 +68,17 @@ class TestGameApi:
         assert response.status_code == 200
         assert response.json() == {"status": "ok"}
 
+    async def test_health_check_logs_request_completion(
+        self,
+        api_client,
+        caplog,
+    ) -> None:
+        with caplog.at_level("INFO"):
+            response = await api_client("GET", "/health")
+
+        assert response.status_code == 200
+        assert "Request completed method=GET path=/health status=200" in caplog.text
+
 
     async def test_initialize_game_returns_serialized_state(
         self,
@@ -117,6 +128,7 @@ class TestGameApi:
         self,
         api_client,
         game_service: Mock,
+        caplog,
     ) -> None:
         game_service._get_game_state.side_effect = RuntimeError(
             "Game has not been initialized."
@@ -126,6 +138,7 @@ class TestGameApi:
 
         assert response.status_code == 409
         assert response.json() == {"detail": "Game has not been initialized."}
+        assert "Game action rejected status=409" in caplog.text
 
 
     async def test_create_delivery_calls_game_service(
