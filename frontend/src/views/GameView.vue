@@ -1,16 +1,198 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import { gameApi } from '../api/game'
-import AssignDeliveryDialog from '../components/game/AssignDeliveryDialog.vue'
-import GameInfoPanel from '../components/game/GameInfoPanel.vue'
-import GameMap from '../components/game/GameMap.vue'
-import RoverDock from '../components/game/RoverDock.vue'
-import TopBar from '../components/layout/TopBar.vue'
-import type { GameState, MapPoint, MapRoad, Order, Rover } from '../types/game'
-const points: MapPoint[]=[{id:1,name:'Lunar Base',type:'base',x:168,y:400},{id:2,name:'Crater Alpha',type:'delivery',x:505,y:305},{id:3,name:'Crater Beta',type:'delivery',x:400,y:118},{id:4,name:'Crater Omega',type:'delivery',x:182,y:70}]
-const roads: MapRoad[]=[{from_point_id:1,to_point_id:2,distance:11,risk:.2,speed_modifier:1},{from_point_id:1,to_point_id:3,distance:14,risk:.4,speed_modifier:.8},{from_point_id:2,to_point_id:3,distance:13,risk:.7,speed_modifier:.6},{from_point_id:4,to_point_id:3,distance:6,risk:.7,speed_modifier:.6}]
-const state=ref<GameState>();const error=ref('');const loading=ref(true);const busy=ref(false);const selectedPoint=ref<MapPoint>();const selectedRover=ref<Rover>();const selectedOrder=ref<Order>();const draggingRover=ref<Rover>();const validOrderIds=ref<number[]>([]);const assignment=ref<{rover:Rover;order:Order}>()
-const rovers=computed(()=>state.value?.active_rovers??[]);const availableRovers=computed(()=>rovers.value.filter(r=>r.status==='idle'));const destination=computed(()=>assignment.value&&points.find(p=>p.id===assignment.value?.order.destination_point_id));const distance=computed(()=>{if(!assignment.value||!destination.value)return;return roads.find(r=>(r.from_point_id===assignment.value!.rover.current_point_id&&r.to_point_id===destination.value!.id)||(r.to_point_id===assignment.value!.rover.current_point_id&&r.from_point_id===destination.value!.id))?.distance})
-function selectPoint(point:MapPoint){selectedPoint.value=point;selectedRover.value=undefined;selectedOrder.value=state.value?.active_orders.find(o=>o.destination_point_id===point.id)}function selectRover(rover:Rover){selectedRover.value=rover;selectedPoint.value=undefined;selectedOrder.value=undefined}async function load(){loading.value=true;error.value='';try{state.value=await gameApi.state()}catch(e){error.value=e instanceof Error?e.message:'Unable to contact mission control.'}finally{loading.value=false}}async function act(fn:()=>Promise<void>){busy.value=true;error.value='';try{await fn()}catch(e){error.value=e instanceof Error?e.message:'Mission control rejected this action.'}finally{busy.value=false}}async function next(){await act(async()=>{state.value=await gameApi.nextTurn()})}async function start(rover:Rover){draggingRover.value=rover;selectRover(rover);try{validOrderIds.value=(await gameApi.availableOrders(rover.id)).map(o=>o.id)}catch(e){validOrderIds.value=[];error.value=e instanceof Error?e.message:'Could not load contracts.'}}function end(){draggingRover.value=undefined;validOrderIds.value=[]}function choose(order:Order){if(!draggingRover.value||!validOrderIds.value.includes(order.id))return;assignment.value={rover:draggingRover.value,order};end()}async function confirm(){if(!assignment.value)return;const {rover,order}=assignment.value;await act(async()=>{state.value=await gameApi.createDelivery(rover.id,order.id);assignment.value=undefined;selectedOrder.value=undefined})}onMounted(load)
+import { computed, onMounted, ref } from "vue";
+import { gameApi } from "../api/game";
+import AssignDeliveryDialog from "../components/game/AssignDeliveryDialog.vue";
+import GameInfoPanel from "../components/game/GameInfoPanel.vue";
+import GameMap from "../components/game/GameMap.vue";
+import RoverDock from "../components/game/RoverDock.vue";
+import TopBar from "../components/layout/TopBar.vue";
+import type {
+  AvailableOrder,
+  GameState,
+  MapPoint,
+  MapRoad,
+  Order,
+  Rover,
+} from "../types/game";
+
+const state = ref<GameState>();
+const points = ref<MapPoint[]>([]);
+const roads = ref<MapRoad[]>([]);
+const selectedRover = ref<Rover>();
+const selectedPoint = ref<MapPoint>();
+const draggingRover = ref<Rover>();
+const validOrderIds = ref<number[]>([]);
+const previews = ref<AvailableOrder[]>([]);
+const assignment = ref<{ rover: Rover; order: Order }>();
+const busy = ref(false);
+const error = ref("");
+const rovers = computed(() => state.value?.active_rovers ?? []);
+const selectedPointOrders = computed(() =>
+  selectedPoint.value
+    ? (state.value?.active_orders.filter(
+        (order) => order.destination_point_id === selectedPoint.value?.id,
+      ) ?? [])
+    : [],
+);
+const selectedDelivery = computed(() =>
+  selectedRover.value
+    ? state.value?.active_deliveries.find(
+        (delivery) => delivery.rover_id === selectedRover.value?.id,
+      )
+    : undefined,
+);
+const selectedLocationName = computed(() =>
+  selectedRover.value
+    ? points.value.find(
+        (point) => point.id === selectedRover.value?.current_point_id,
+      )?.name
+    : undefined,
+);
+const selectedDestinationName = computed(() => {
+  const order = state.value?.active_orders.find(
+    (item) => item.id === selectedDelivery.value?.order_id,
+  );
+  return points.value.find((point) => point.id === order?.destination_point_id)
+    ?.name;
+});
+
+async function loadGame(): Promise<void> {
+  const [game, map] = await Promise.all([gameApi.state(), gameApi.map()]);
+  state.value = game;
+  points.value = map.points;
+  roads.value = map.roads;
+}
+
+async function perform(action: () => Promise<GameState>): Promise<void> {
+  busy.value = true;
+  error.value = "";
+  try {
+    state.value = await action();
+    if (selectedRover.value) {
+      selectedRover.value = state.value.active_rovers.find(
+        (rover) => rover.id === selectedRover.value?.id,
+      );
+    }
+  } catch (caught) {
+    error.value = caught instanceof Error ? caught.message : "Action failed.";
+  } finally {
+    busy.value = false;
+  }
+}
+
+async function startDrag(rover: Rover): Promise<void> {
+  if (rover.status !== "idle") return;
+  selectedRover.value = rover;
+  draggingRover.value = rover;
+  try {
+    previews.value = await gameApi.availableOrders(rover.id);
+    validOrderIds.value = previews.value.map((order) => order.id);
+  } catch (caught) {
+    error.value =
+      caught instanceof Error ? caught.message : "Could not load orders.";
+  }
+}
+function endDrag(): void {
+  draggingRover.value = undefined;
+  validOrderIds.value = [];
+}
+function selectPoint(point: MapPoint): void {
+  selectedPoint.value = point;
+  selectedRover.value = undefined;
+}
+function selectOrder(order: Order): void {
+  if (draggingRover.value && validOrderIds.value.includes(order.id)) {
+    assignment.value = { rover: draggingRover.value, order };
+    endDrag();
+  }
+}
+async function confirmDelivery(): Promise<void> {
+  if (assignment.value)
+    await perform(async () => {
+      const result = await gameApi.createDelivery(
+        assignment.value!.rover.id,
+        assignment.value!.order.id,
+      );
+      assignment.value = undefined;
+      return result;
+    });
+}
+async function cancelSelectedDelivery(): Promise<void> {
+  const delivery = state.value?.active_deliveries.find(
+    (item) => item.rover_id === selectedRover.value?.id,
+  );
+  if (delivery) await perform(() => gameApi.cancelDelivery(delivery.id));
+}
+onMounted(async () => {
+  try {
+    await loadGame();
+  } catch (caught) {
+    error.value =
+      caught instanceof Error ? caught.message : "Backend unavailable.";
+  }
+});
 </script>
-<template><main class="game-shell"><TopBar :turn="state?.turn??0" :money="state?.money??0" :score="state?.score??0" :busy="busy" @next-turn="next"/><div v-if="loading" class="center-state">CONNECTING TO MISSION CONTROL…</div><template v-else-if="state"><p v-if="error" class="notification">{{error}} <button @click="error=''">×</button></p><div class="mission-grid"><GameMap :points="points" :roads="roads" :orders="state.active_orders" :rovers="rovers" :valid-order-ids="validOrderIds" :dragging="Boolean(draggingRover)" :selected-point-id="selectedPoint?.id" @select-point="selectPoint" @choose-order="choose"/><GameInfoPanel :point="selectedPoint" :rover="selectedRover" :order="selectedOrder"/></div><RoverDock :rovers="availableRovers" :selected-id="selectedRover?.id" @select="selectRover" @drag-start="start" @drag-end="end"/></template><div v-else class="center-state"><p>{{error||'No mission data available.'}}</p><button class="quiet-button" @click="load">RETRY</button></div><AssignDeliveryDialog v-if="assignment" :rover="assignment.rover" :order="assignment.order" :destination="destination" :distance="distance" :busy="busy" @confirm="confirm" @close="assignment=undefined"/></main></template>
+
+<template>
+  <main class="game-shell">
+    <TopBar
+      :turn="state?.turn ?? 0"
+      :money="state?.money ?? 0"
+      :score="state?.score ?? 0"
+      :busy="busy"
+      @next-turn="perform(gameApi.nextTurn)"
+    />
+    <p v-if="error" class="notification">{{ error }}</p>
+    <div v-if="!state" class="center-state">CONNECTING TO MISSION CONTROL…</div>
+    <template v-else>
+      <div class="mission-grid">
+        <GameMap
+          :points="points"
+          :roads="roads"
+          :orders="state.active_orders"
+          :rovers="rovers"
+          :valid-order-ids="validOrderIds"
+          :dragging="Boolean(draggingRover)"
+          @select-point="selectPoint"
+          @choose-order="selectOrder"
+        />
+        <GameInfoPanel
+          :rover="selectedRover"
+          :point="selectedRover ? undefined : selectedPoint"
+          :orders="selectedPointOrders"
+          :delivery="selectedDelivery"
+          :location-name="selectedLocationName"
+          :destination-name="selectedDestinationName"
+          @cancel="cancelSelectedDelivery"
+          @choose-order="selectOrder"
+        />
+      </div>
+      <RoverDock
+        :rovers="rovers"
+        :deliveries="state.active_deliveries"
+        :selected-id="selectedRover?.id"
+        @select="selectedRover = $event"
+        @drag-start="startDrag"
+        @drag-end="endDrag"
+        @cancel="perform(() => gameApi.cancelDelivery($event))"
+      />
+    </template>
+    <AssignDeliveryDialog
+      v-if="assignment"
+      :rover="assignment.rover"
+      :order="assignment.order"
+      :destination="
+        points.find(
+          (point) => point.id === assignment?.order.destination_point_id,
+        )
+      "
+      :battery-after="
+        previews.find((order) => order.id === assignment?.order.id)
+          ?.battery_after
+      "
+      :busy="busy"
+      @confirm="confirmDelivery"
+      @close="assignment = undefined"
+    />
+  </main>
+</template>
