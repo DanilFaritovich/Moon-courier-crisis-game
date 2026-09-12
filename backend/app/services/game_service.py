@@ -1,12 +1,14 @@
 import logging
 from dataclasses import dataclass, field
-from random import randint
+from random import choice, randint
 from uuid import UUID, uuid4
 
 from app.models.delivery import Delivery
 from app.models.event import Event
-from app.models.order import Order
-from app.models.rover import Rover
+from app.models.order import Order, OrderUrgency
+from app.models.order import OrderStatus
+from app.models.rover import Rover, RoverStatus
+from app.schemas.map import MapData, MapPointData, MapRoadData
 from app.repositories.unit_of_work import UnitOfWork
 from app.services.delivery_service import DeliveryService
 from app.services.event_service import EventService
@@ -103,6 +105,10 @@ class GameService:
                 rover_id,
             )
             raise RuntimeError(f"Rover {rover_id} not found.")
+        if rover.status is not RoverStatus.IDLE:
+            return []
+        if rover.status is not RoverStatus.IDLE:
+            raise RuntimeError(f"Rover {rover_id} is not available.")
 
         order = self.order_service.get_order(order_id)
 
@@ -112,6 +118,8 @@ class GameService:
                 order_id,
             )
             raise RuntimeError(f"Order {order_id} not found.")
+        if order.status is not OrderStatus.AVAILABLE:
+            raise RuntimeError(f"Order {order_id} is not available.")
 
         try:
             self.logger.info(
@@ -142,9 +150,11 @@ class GameService:
                 distance=distance,
                 weight=order.weight,
             )
+            self.rover_service.set_status(rover, RoverStatus.DELIVERING)
 
             game_state.active_deliveries = self.delivery_service.get_active_deliveries()
-            game_state.active_rovers = self.rover_service.get_available_rovers()
+            # Keep delivering rovers visible to API clients until the turn ends.
+            game_state.active_rovers = list(game_state.active_rovers)
 
             self.unit_of_work.commit()
             self.logger.info(
@@ -215,9 +225,11 @@ class GameService:
                 distance=distance,
                 weight=order.weight,
             )
+            self.rover_service.set_status(rover, RoverStatus.IDLE)
 
             game_state.active_deliveries = self.delivery_service.get_active_deliveries()
-            game_state.active_rovers = self.rover_service.get_available_rovers()
+            game_state.active_rovers = list(game_state.active_rovers)
+            game_state.active_orders = self.order_service.get_available_orders()
 
             self.unit_of_work.commit()
             self.logger.info("Cancelled delivery id=%s", delivery_id)
@@ -247,6 +259,8 @@ class GameService:
         available_orders = []
 
         for order in game_state.active_orders:
+            if order.status is not OrderStatus.AVAILABLE:
+                continue
             path = self.graph_service.find_path(
                 start_point_id=rover.current_point_id,
                 end_point_id=order.destination_point_id,
@@ -277,6 +291,37 @@ class GameService:
             rover_id,
         )
         return available_orders
+
+    def get_available_order_previews(self, rover_id: int) -> list[tuple[Order, int, int]]:
+        rover = self.rover_service.get_rover(rover_id)
+        if rover is None:
+            raise RuntimeError(f"Rover {rover_id} not found.")
+        previews = []
+        for order in self.get_available_orders_by_rover(rover_id):
+            path = self.graph_service.find_path(rover.current_point_id, order.destination_point_id)
+            distance = self.graph_service.get_path_distance(path)
+            battery_after = self.rover_service.get_battery_after_move(rover, distance, order.weight)
+            previews.append((order, distance, battery_after))
+        return previews
+
+    def get_map(self) -> MapData:
+        """Return the initialized map for API clients."""
+
+        graph = self._get_game_state().graph_state.graph
+        return MapData(
+            points=[
+                MapPointData(id=node_id, **attributes)
+                for node_id, attributes in graph.nodes(data=True)
+            ],
+            roads=[
+                MapRoadData(
+                    from_point_id=from_point_id,
+                    to_point_id=to_point_id,
+                    **attributes,
+                )
+                for from_point_id, to_point_id, attributes in graph.edges(data=True)
+            ],
+        )
 
     def _complete_deliveries(self, game_state: GameState) -> None:
         active_deliveries = self.delivery_service.get_active_deliveries()
@@ -312,13 +357,14 @@ class GameService:
             self.rover_service.move_rover_back(
                 rover, base_point_id, distance, order.weight
             )
+            self.rover_service.set_status(rover, RoverStatus.IDLE)
 
     def _generate_events(self, game_state: GameState) -> None:
         self.logger.debug("Generating event for turn=%s", game_state.turn)
         self.event_service.create_random_event(turn=game_state.turn)
 
     def _generate_orders(self, game_state: GameState) -> None:
-        points_id = self.graph_service.get_unbase()
+        points = self.graph_service.get_unbase()
         rover = self.rover_service.get_rover_with_max_weight()
         if rover is None:
             self.logger.error("Cannot generate orders: no rovers found")
@@ -338,8 +384,19 @@ class GameService:
                 game_state.turn,
             )
             for _ in range(add_orders):
-                self.order_service.create_random_order(
-                    list(map(lambda x: x.id, points_id)), max_weight_rover
+                point = choice(points)
+                distance = self.graph_service.get_path_distance(
+                    self.graph_service.find_path(
+                        self.graph_service.get_base().id,
+                        point.id,
+                    )
+                )
+                max_weight = min(max_weight_rover, 100 // max(distance, 1))
+                self.order_service.create_order(
+                    destination_point_id=point.id,
+                    weight=randint(1, max_weight),
+                    reward=randint(40, 100),
+                    urgency=choice(list(OrderUrgency)),
                 )
 
     def _refresh_game_state(self, game_state: GameState) -> None:
