@@ -1,102 +1,129 @@
 # Moon Courier Crisis Game
 
 [![CI](https://github.com/DanilFaritovich/Moon-courier-crisis-game/actions/workflows/ci.yml/badge.svg)](https://github.com/DanilFaritovich/Moon-courier-crisis-game/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/Python-3.14-blue?logo=python)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi)](https://fastapi.tiangolo.com/)
+[![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-ORM-red)](https://www.sqlalchemy.org/)
+[![Vue](https://img.shields.io/badge/Vue-3-42b883?logo=vuedotjs)](https://vuejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Frontend-3178c6?logo=typescript)](https://www.typescriptlang.org/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ed?logo=docker)](https://www.docker.com/)
+[![Playwright](https://img.shields.io/badge/Playwright-E2E-2eAD33?logo=playwright)](https://playwright.dev/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**Moon Courier Crisis** is a turn-based logistics game where the player
-operates lunar rovers from a mission-control interface. The goal is to assign
-rovers to delivery contracts, manage battery capacity, complete missions, and
-plan the next turn.
+**Moon Courier Crisis** is a full-stack turn-based logistics game where the player manages lunar rovers, delivery contracts, battery capacity, cargo constraints, and mission progression from a mission-control interface.
 
-It is a full-stack pet project built to demonstrate practical backend and
-frontend engineering: a typed FastAPI API, domain-oriented game services, and
-an interactive Vue 3 game UI.
+The project was built as a portfolio application to demonstrate production-oriented Python backend development together with a typed Vue frontend, automated testing, Docker-based deployment, and CI quality gates.
 
-## Interface preview
+## Interface
 
 | Mission overview | Active delivery |
 | --- | --- |
 | ![Lunar map with contracts and rover dock](docs/images/mission-overview.png) | ![Assigned rover with updated battery and delivery status](docs/images/active-delivery.png) |
 
-## Highlights
+## What this project demonstrates
 
+### Backend engineering
+
+- FastAPI REST API with typed Pydantic request and response models.
+- Domain-oriented service layer for game, rover, order, delivery, event, and graph logic.
+- SQLAlchemy repositories and a Unit of Work abstraction.
+- Backend-authoritative business rules: route feasibility, cargo limits, battery prediction, delivery lifecycle, and turn processing are calculated server-side.
+- Explicit separation between API, domain services, persistence, and transport models.
+- Structured logging and health-check endpoints.
+
+### Frontend engineering
+
+- Vue 3 + TypeScript using the Composition API.
 - Interactive SVG lunar map with pan and zoom.
-- Drag a rover onto a destination to assign a contract.
-- Contract selection when a destination has multiple available orders.
-- Backend-calculated delivery feasibility and projected battery level.
-- Delivery cancellation from rover cards and the Tactical Info panel.
-- Turn processing that completes deliveries and generates new contracts.
-- Strict TypeScript, component tests, linting, formatting, and GitHub Actions
-  CI.
+- Drag-and-drop rover assignment.
+- Contract selection and delivery confirmation flows.
+- Typed API client and frontend state synchronized with backend responses.
+- Component and workflow tests with Vitest and Vue Test Utils.
+- Browser-level end-to-end coverage with Playwright.
+
+### Delivery and quality
+
+- Docker Compose environment for running the complete application.
+- Nginx serves the frontend and proxies API requests to FastAPI.
+- GitHub Actions CI for backend, frontend, Docker smoke tests, and Playwright E2E tests.
+- Ruff, Mypy, Pytest, ESLint, Prettier, `vue-tsc`, Vitest, and production build checks.
 
 ## Tech stack
 
 | Area | Technologies |
 | --- | --- |
-| Frontend | Vue 3, TypeScript, Composition API, Vite |
-| Frontend quality | Vitest, Vue Test Utils, ESLint, Prettier, `vue-tsc` |
-| Backend | Python, FastAPI, Pydantic, SQLAlchemy |
+| Backend | Python 3.14, FastAPI, Pydantic, SQLAlchemy |
 | Backend quality | Pytest, Ruff, Mypy |
-| Automation | GitHub Actions |
+| Frontend | Vue 3, TypeScript, Composition API, Vite |
+| Frontend quality | Vitest, Vue Test Utils, ESLint, Prettier, `vue-tsc`, Playwright |
+| Infrastructure | Docker, Docker Compose, Nginx |
+| CI | GitHub Actions |
+| Persistence | SQLite for the current demo build |
 
 ## Architecture
 
 ```text
-Vue 3 game UI
-      │  HTTP via the Vite development proxy
-      ▼
-FastAPI routers ──► GameService ──► domain services
-      │                  │               ├── delivery service
-      │                  │               ├── rover service
-      │                  │               ├── order service
-      │                  │               └── graph service
-      ▼                  ▼
-Pydantic response models   SQLAlchemy repositories / SQLite
+Vue 3 / TypeScript UI
+        │
+        │ HTTP
+        ▼
+FastAPI routers
+        │
+        ▼
+GameService
+        │
+        ├── RoverService
+        ├── OrderService
+        ├── DeliveryService
+        ├── EventService
+        └── GraphService
+                │
+                ▼
+      SQLAlchemy repositories
+                │
+                ▼
+              SQLite
 ```
 
-The frontend keeps UI state locally and uses a small typed API client. Game
-rules, path calculation, availability checks, battery calculation, and state
-transitions remain on the backend rather than being duplicated in the browser.
+The frontend is intentionally thin: it renders state and sends commands, while game rules and state transitions remain on the backend. This keeps the business logic in one place and makes it independently testable.
 
 ## Key engineering decisions
 
-- **Backend remains authoritative.** The UI never invents delivery outcomes:
-  it requests the rover's available contracts and battery forecast from the
-  API before confirmation.
-- **Seeded playable state.** On startup, the backend seeds the map, starter
-  rovers, and contracts. The game is immediately playable; the frontend does
-  not need a separate initialization flow.
-- **Focused components.** The game map, rover dock, tactical panel, contract
-  picker, and confirmation dialog are separate Vue components.
-- **Safe delivery lifecycle.** Creating or cancelling a delivery updates rover,
-  order, and delivery state together through the game service.
-- **Quality gate in CI.** Every pull request runs backend checks plus frontend
-  formatting, linting, type checking, tests, and a production build.
+- **Backend as the source of truth.** The client never calculates delivery outcomes itself. It requests feasible contracts and projected battery state from the API before confirming an action.
+- **Service-oriented domain logic.** Game orchestration is separated from rover, order, delivery, event, and graph responsibilities instead of placing all logic inside API handlers.
+- **Repository abstraction.** Persistence concerns are isolated behind repository interfaces and a Unit of Work layer.
+- **Seeded playable state.** The application starts with a ready-to-use lunar map, rovers, and delivery contracts so it can be demonstrated immediately.
+- **Automated regression coverage.** Unit/component tests are complemented by Playwright E2E tests that exercise the application through the browser.
+- **Reproducible local deployment.** The full stack can be started with one Docker Compose command.
 
-## Running locally
+## Run the application
 
-### Prerequisites
+### Docker — recommended
 
-- Python 3.14
-- Node.js 22 and npm
+Requirements:
 
-Open two terminals in the repository root.
-
-### Docker (recommended for a quick demo)
-
-With Docker Desktop or Docker Engine running:
+- Docker Engine or Docker Desktop
+- Docker Compose
 
 ```bash
+git clone https://github.com/DanilFaritovich/Moon-courier-crisis-game.git
+cd Moon-courier-crisis-game
 docker compose up --build
 ```
 
-Open <http://127.0.0.1:8080>. Nginx serves the Vue application and proxies API
-requests to FastAPI inside the Compose network. Stop the application with
-`Ctrl+C`; add `--detach` to run it in the background.
+Open:
 
-The sections below describe running the frontend and backend separately for
-development.
+```text
+http://127.0.0.1:8080
+```
 
-### 1. Start the backend
+Nginx serves the Vue application and proxies API requests to the FastAPI container.
+
+## Run for development
+
+### Backend
+
+Requirements: Python 3.14.
 
 ```bash
 python -m venv .venv
@@ -107,10 +134,21 @@ cd backend
 uvicorn app.main:app --reload
 ```
 
-The API runs on <http://127.0.0.1:8000>. FastAPI documentation is available at
-<http://127.0.0.1:8000/docs>.
+Backend:
 
-### 2. Start the frontend
+```text
+http://127.0.0.1:8000
+```
+
+FastAPI docs:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+### Frontend
+
+Requirements: Node.js 22 and npm.
 
 ```bash
 cd frontend
@@ -118,38 +156,43 @@ npm ci
 npm run dev
 ```
 
-Open the address printed by Vite, normally <http://127.0.0.1:5173>. During
-development, Vite proxies `/game` and `/health` requests to FastAPI.
+Vite normally starts at:
 
-## Gameplay
+```text
+http://127.0.0.1:5173
+```
 
-1. Drag an idle rover from the bottom dock to a map point with a contract.
-2. If the point has several feasible contracts, choose one from the list.
-3. Review the payload, reward, and predicted battery level, then confirm.
-4. Click **Next Turn** to complete active deliveries and generate contracts.
-5. An active delivery can be cancelled from the rover card or Tactical Info;
-   the rover returns to base and the contract becomes available again.
+During development, Vite proxies `/game` and `/health` requests to FastAPI.
+
+## Gameplay flow
+
+1. Select or drag an idle rover to a lunar destination.
+2. Request the delivery contracts available to that rover.
+3. Choose a feasible contract.
+4. Review cargo, reward, and projected battery usage.
+5. Confirm the delivery.
+6. Advance the turn to process active missions and generate the next state.
+7. Cancel an active delivery when necessary and return the rover to its base state.
 
 ## API overview
 
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
-| `GET` | `/health` | API health check |
+| `GET` | `/health` | Service health check |
 | `GET` | `/game/state` | Current game state |
-| `GET` | `/game/map` | Map points and roads |
-| `GET` | `/game/rovers/{rover_id}/available-orders` | Feasible orders and battery projection |
-| `POST` | `/game/deliveries` | Create a delivery (`rover_id`, `order_id`) |
-| `DELETE` | `/game/deliveries/{delivery_id}` | Cancel a delivery |
-| `POST` | `/game/next-turn` | Advance the simulation by one turn |
+| `GET` | `/game/map` | Lunar map points and roads |
+| `GET` | `/game/rovers/{rover_id}/available-orders` | Feasible contracts and battery projection |
+| `POST` | `/game/deliveries` | Assign a rover to an order |
+| `DELETE` | `/game/deliveries/{delivery_id}` | Cancel an active delivery |
+| `POST` | `/game/next-turn` | Advance the simulation |
 
-`POST /game/initialize` is retained for API compatibility. The frontend does
-not call it because startup seeding makes the game ready automatically.
+`POST /game/initialize` is retained for API compatibility. The current UI does not need to call it because the backend seeds a playable state during startup.
 
 ## Quality checks
 
 ### Backend
 
-Run from the repository root with the virtual environment activated:
+Run from the repository root with the Python environment activated:
 
 ```bash
 python -m ruff check .
@@ -167,31 +210,38 @@ npm run lint
 npm run typecheck
 npm run test
 npm run build
+npm run test:e2e
 ```
 
-The frontend test suite covers the API client, key UI components, contract
-selection, delivery cancellation, and primary GameView workflows.
+CI also builds the Docker images, starts the full application, checks the backend health endpoint, performs a proxied API smoke test, and runs Playwright against the containerized stack.
 
 ## Project structure
 
 ```text
 .
-├── backend/             # FastAPI application, domain services, models, tests
-├── frontend/            # Vue 3 application and component tests
+├── backend/             # FastAPI app, domain services, repositories, models, tests
+├── frontend/            # Vue 3 app, component tests, Playwright E2E tests
 ├── data/map.json        # Lunar map source data
-├── .github/workflows/   # Backend and frontend CI
+├── docs/images/         # README screenshots
+├── .github/workflows/   # CI pipeline
+├── docker-compose.yml   # Full-stack local environment
 └── pyproject.toml       # Python tooling configuration
 ```
 
-## Future improvements
+## Current limitations
 
-- Add Playwright end-to-end coverage for browser-native drag and drop.
-- Persist games in PostgreSQL instead of the current in-memory SQLite database.
-- Add random events, road risk effects, and richer rover upgrades.
-- Add save slots and player profiles.
+- SQLite is used for the current demo build.
+- Game state is scoped to one backend process and resets when the backend restarts.
+- Authentication and multi-user save slots are intentionally outside the scope of the first release.
 
-## Current limitation
+## Possible next steps
 
-The project intentionally uses in-memory SQLite for a fast development setup.
-Game state is scoped to one backend process and resets when that process is
-restarted.
+- PostgreSQL persistence and saved games.
+- Player accounts and multiple save slots.
+- More random events and route risk mechanics.
+- Rover upgrades and richer economy mechanics.
+- Deployment to a public demo environment.
+
+## License
+
+Released under the [MIT License](LICENSE).
