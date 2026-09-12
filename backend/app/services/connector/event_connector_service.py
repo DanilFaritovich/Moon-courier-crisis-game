@@ -18,17 +18,20 @@ class EventConnectorRepository(EventRepository):
 
         self.db.add(event)
         self.db.flush()
+        self.logger.debug("Persisted event id=%s", event.id)
 
         return event
 
     def get_event(self, event_id: int) -> Event | None:
         """Return an event by its identifier."""
 
+        self.logger.debug("Loading event id=%s", event_id)
         return self.db.get(Event, event_id)
 
     def get_active_events(self, turn: int) -> list[Event]:
         """Return events active on the given turn."""
 
+        self.logger.debug("Loading active events for turn=%s", turn)
         return list(
             self.db.scalars(
                 select(Event).where(
@@ -42,5 +45,6 @@ class EventConnectorRepository(EventRepository):
         """Update and persist a game event."""
 
         self.db.flush()
+        self.logger.debug("Updated persisted event id=%s", event.id)
 
         return event

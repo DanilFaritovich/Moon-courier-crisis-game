@@ -52,6 +52,11 @@ class GraphService:
             )
 
         self.graph_state = GraphState(graph=graph)
+        self.logger.info(
+            "Built map graph with %s points and %s roads",
+            graph.number_of_nodes(),
+            graph.number_of_edges(),
+        )
 
         return self.graph_state
 
@@ -65,13 +70,25 @@ class GraphService:
         graph = self._get_graph()
 
         try:
-            return nx.shortest_path(
+            path = nx.shortest_path(
                 graph,
                 source=start_point_id,
                 target=end_point_id,
                 weight="distance",
             )
+            self.logger.debug(
+                "Found path from point_id=%s to point_id=%s: %s",
+                start_point_id,
+                end_point_id,
+                path,
+            )
+            return path
         except (nx.NetworkXNoPath, nx.NodeNotFound):
+            self.logger.warning(
+                "No path from point_id=%s to point_id=%s",
+                start_point_id,
+                end_point_id,
+            )
             return []
 
     def get_path_distance(
@@ -83,12 +100,15 @@ class GraphService:
         graph = self._get_graph()
 
         try:
-            return nx.path_weight(
+            distance = nx.path_weight(
                 graph,
                 path,
                 weight="distance",
             )
+            self.logger.debug("Calculated path distance=%s for path=%s", distance, path)
+            return distance
         except nx.NetworkXNoPath:
+            self.logger.warning("Cannot calculate distance for path=%s", path)
             return 0
 
     def get_path_risk(

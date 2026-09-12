@@ -56,6 +56,7 @@ class GameService:
         """Return the current game state."""
 
         if self.game_state is None:
+            self.logger.warning("Attempted to access an uninitialized game")
             raise RuntimeError("Game has not been initialized.")
 
         return self.game_state
@@ -63,6 +64,7 @@ class GameService:
     def initialize_game(self):
         """Initialize the game world."""
 
+        self.logger.info("Initializing game world")
         graph_state = self.graph_service.build_graph()
         rovers = self.rover_service.get_available_rovers()
         orders = self.order_service.get_available_orders()
@@ -79,6 +81,13 @@ class GameService:
         game_state.active_events = self.event_service.get_active_events(game_state.turn)
 
         self.game_state = game_state
+        self.logger.info(
+            "Initialized game id=%s with %s rovers, %s orders, and %s deliveries",
+            game_state.game_id,
+            len(rovers),
+            len(orders),
+            len(deliveries),
+        )
 
         return game_state
 
@@ -89,14 +98,28 @@ class GameService:
         rover = self.rover_service.get_rover(rover_id)
 
         if rover is None:
+            self.logger.warning(
+                "Cannot create delivery: rover id=%s was not found",
+                rover_id,
+            )
             raise RuntimeError(f"Rover {rover_id} not found.")
 
         order = self.order_service.get_order(order_id)
 
         if order is None:
+            self.logger.warning(
+                "Cannot create delivery: order id=%s was not found",
+                order_id,
+            )
             raise RuntimeError(f"Order {order_id} not found.")
 
         try:
+            self.logger.info(
+                "Creating delivery for rover id=%s and order id=%s on turn=%s",
+                rover_id,
+                order_id,
+                game_state.turn,
+            )
             self.delivery_service.create_delivery(
                 order_id=order_id,
                 rover_id=rover_id,
@@ -124,9 +147,20 @@ class GameService:
             game_state.active_rovers = self.rover_service.get_available_rovers()
 
             self.unit_of_work.commit()
-        except Exception as e:
+            self.logger.info(
+                "Created delivery for rover id=%s and order id=%s",
+                rover_id,
+                order_id,
+            )
+        except Exception:
             self.unit_of_work.rollback()
-            raise e
+            self.logger.exception(
+                "Failed to create delivery for rover id=%s and order id=%s; "
+                "rolled back transaction",
+                rover_id,
+                order_id,
+            )
+            raise
 
         return game_state
 
@@ -137,19 +171,34 @@ class GameService:
         delivery = self.delivery_service.get_delivery(delivery_id)
 
         if delivery is None:
+            self.logger.warning(
+                "Cannot cancel delivery: delivery id=%s was not found",
+                delivery_id,
+            )
             raise RuntimeError(f"Delivery {delivery_id} not found.")
 
         rover = self.rover_service.get_rover(delivery.rover_id)
 
         if rover is None:
+            self.logger.warning(
+                "Cannot cancel delivery id=%s: rover id=%s was not found",
+                delivery_id,
+                delivery.rover_id,
+            )
             raise RuntimeError(f"Rover {delivery.rover_id} not found.")
 
         order = self.order_service.get_order(delivery.order_id)
 
         if order is None:
+            self.logger.warning(
+                "Cannot cancel delivery id=%s: order id=%s was not found",
+                delivery_id,
+                delivery.order_id,
+            )
             raise RuntimeError(f"Order {delivery.order_id} not found.")
 
         try:
+            self.logger.info("Cancelling delivery id=%s", delivery_id)
             self.delivery_service.delete_delivery(delivery_id)
 
             self.order_service.unassign_order(order)
@@ -171,9 +220,14 @@ class GameService:
             game_state.active_rovers = self.rover_service.get_available_rovers()
 
             self.unit_of_work.commit()
-        except Exception as e:
+            self.logger.info("Cancelled delivery id=%s", delivery_id)
+        except Exception:
             self.unit_of_work.rollback()
-            raise e
+            self.logger.exception(
+                "Failed to cancel delivery id=%s; rolled back transaction",
+                delivery_id,
+            )
+            raise
 
         return game_state
 
@@ -184,6 +238,10 @@ class GameService:
         rover = self.rover_service.get_rover(rover_id)
 
         if rover is None:
+            self.logger.warning(
+                "Cannot get available orders: rover id=%s was not found",
+                rover_id,
+            )
             raise RuntimeError(f"Rover {rover_id} not found.")
 
         available_orders = []
@@ -213,15 +271,26 @@ class GameService:
 
             available_orders.append(order)
 
+        self.logger.debug(
+            "Found %s available orders for rover id=%s",
+            len(available_orders),
+            rover_id,
+        )
         return available_orders
 
     def _complete_deliveries(self, game_state: GameState) -> None:
         active_deliveries = self.delivery_service.get_active_deliveries()
+        self.logger.info("Completing %s active deliveries", len(active_deliveries))
         for delivery in active_deliveries:
             self.delivery_service.complete_delivery(delivery)
 
             order = self.order_service.get_order(delivery.order_id)
             if order is None:
+                self.logger.error(
+                    "Cannot complete delivery id=%s: order id=%s was not found",
+                    delivery.id,
+                    delivery.order_id,
+                )
                 raise RuntimeError(f"Order {delivery.order_id} not found.")
 
             self.order_service.complete_order(order)
@@ -229,6 +298,11 @@ class GameService:
 
             rover = self.rover_service.get_rover(delivery.rover_id)
             if rover is None:
+                self.logger.error(
+                    "Cannot complete delivery id=%s: rover id=%s was not found",
+                    delivery.id,
+                    delivery.rover_id,
+                )
                 raise RuntimeError(f"Rover {delivery.rover_id} not found.")
 
             base_point_id = self.graph_service.get_base().id
@@ -240,12 +314,14 @@ class GameService:
             )
 
     def _generate_events(self, game_state: GameState) -> None:
+        self.logger.debug("Generating event for turn=%s", game_state.turn)
         self.event_service.create_random_event(turn=game_state.turn)
 
     def _generate_orders(self, game_state: GameState) -> None:
         points_id = self.graph_service.get_unbase()
         rover = self.rover_service.get_rover_with_max_weight()
         if rover is None:
+            self.logger.error("Cannot generate orders: no rovers found")
             raise RuntimeError("No rovers found.")
         max_weight_rover = rover.cargo_capacity
 
@@ -256,6 +332,11 @@ class GameService:
         if len(available_orders) < max_orders:
             needed_orders = max_orders - len(available_orders)
             add_orders = randint(1, needed_orders)
+            self.logger.info(
+                "Generating %s orders for turn=%s",
+                add_orders,
+                game_state.turn,
+            )
             for _ in range(add_orders):
                 self.order_service.create_random_order(
                     list(map(lambda x: x.id, points_id)), max_weight_rover
@@ -268,6 +349,7 @@ class GameService:
         game_state.active_events = self.event_service.get_active_events(
             game_state.turn,
         )
+        self.logger.debug("Refreshed game state for turn=%s", game_state.turn)
 
     def next_turn(self) -> GameState:
         """Advance the game turn."""
@@ -276,6 +358,7 @@ class GameService:
 
         try:
             game_state.turn += 1
+            self.logger.info("Starting turn=%s", game_state.turn)
 
             # Complete deliveries
             self._complete_deliveries(game_state)
@@ -287,8 +370,13 @@ class GameService:
             self._refresh_game_state(game_state)
 
             self.unit_of_work.commit()
-        except Exception as e:
+            self.logger.info("Completed turn=%s", game_state.turn)
+        except Exception:
             self.unit_of_work.rollback()
-            raise e
+            self.logger.exception(
+                "Failed to process turn=%s; rolled back transaction",
+                game_state.turn,
+            )
+            raise
 
         return game_state

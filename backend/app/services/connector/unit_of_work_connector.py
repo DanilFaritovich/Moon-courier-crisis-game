@@ -13,6 +13,8 @@ class SQLAlchemyUnitOfWork(UnitOfWork):
 
     def commit(self) -> None:
         self.db.commit()
+        self.logger.debug("Committed database transaction")
 
     def rollback(self) -> None:
         self.db.rollback()
+        self.logger.warning("Rolled back database transaction")

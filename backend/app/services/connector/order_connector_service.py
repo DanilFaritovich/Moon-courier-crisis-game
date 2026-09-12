@@ -18,13 +18,16 @@ class OrderConnector(OrderRepository):
 
         self.db.add(order)
         self.db.flush()
+        self.logger.debug("Persisted order id=%s", order.id)
 
         return order
 
     def get_order(self, order_id: int) -> Order | None:
+        self.logger.debug("Loading order id=%s", order_id)
         return self.db.get(Order, order_id)
 
     def get_available_orders(self) -> list[Order]:
+        self.logger.debug("Loading available orders")
         return list(
             self.db.scalars(
                 select(Order).where(Order.status == OrderStatus.AVAILABLE)
@@ -35,5 +38,6 @@ class OrderConnector(OrderRepository):
         """Update an existing delivery order."""
 
         self.db.flush()
+        self.logger.debug("Updated persisted order id=%s", order.id)
 
         return order
